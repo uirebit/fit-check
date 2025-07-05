@@ -1,6 +1,8 @@
 "use server"
 
 import { redirect } from "next/navigation"
+import prisma from "@/lib/prisma"
+import * as bcrypt from "bcryptjs"
 
 interface AuthState {
   success?: boolean
@@ -9,13 +11,9 @@ interface AuthState {
 }
 
 export async function loginUser(prevState: AuthState | null, formData: FormData): Promise<AuthState> {
-  // Simulate API delay
-  await new Promise((resolve) => setTimeout(resolve, 1000))
-
   const email = formData.get("email") as string
   const password = formData.get("password") as string
 
-  // Basic validation
   if (!email || !password) {
     return {
       success: false,
@@ -23,41 +21,38 @@ export async function loginUser(prevState: AuthState | null, formData: FormData)
     }
   }
 
-  // Simulate authentication logic - accept multiple demo accounts
-  const validAccounts = [
-    { email: "demo@example.com", password: "password" },
-    { email: "user@gmail.com", password: "password" },
-    { email: "john@example.com", password: "password123" },
-  ]
+  // Find user in database
+  const user = await prisma.fc_user.findUnique({
+    where: { email },
+  })
 
-  const validAccount = validAccounts.find((account) => account.email === email && account.password === password)
-
-  if (validAccount) {
-    // In a real app, you would:
-    // 1. Verify credentials against your database
-    // 2. Create a session/JWT token
-    // 3. Set secure cookies
-
-    // For demo purposes, we'll just redirect
-    redirect("/dashboard")
-  } else {
+  if (!user) {
     return {
       success: false,
-      error: "Invalid email or password. Try demo@example.com with password 'password'",
+      error: "Invalid email or password.",
     }
   }
+
+  // Compare password hash
+  const isValid = await bcrypt.compare(password, user.password_hash)
+  if (!isValid) {
+    return {
+      success: false,
+      error: "Invalid email or password.",
+    }
+  }
+
+  // Optionally, set session/cookie here
+  // For now, redirect to dashboard
+  redirect("/dashboard")
 }
 
 export async function registerUser(prevState: AuthState | null, formData: FormData): Promise<AuthState> {
-  // Simulate API delay
-  await new Promise((resolve) => setTimeout(resolve, 1000))
-
   const name = formData.get("name") as string
   const email = formData.get("email") as string
   const password = formData.get("password") as string
   const confirmPassword = formData.get("confirmPassword") as string
 
-  // Basic validation
   if (!name || !email || !password || !confirmPassword) {
     return {
       success: false,
@@ -79,7 +74,6 @@ export async function registerUser(prevState: AuthState | null, formData: FormDa
     }
   }
 
-  // Email validation
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
   if (!emailRegex.test(email)) {
     return {
@@ -88,13 +82,27 @@ export async function registerUser(prevState: AuthState | null, formData: FormDa
     }
   }
 
-  // Simulate user creation
-  // In a real app, you would:
-  // 1. Check if user already exists
-  // 2. Hash the password
-  // 3. Save user to database
-  // 4. Send verification email
-  // 5. Create session/JWT token
+  // Check if user already exists
+  const existingUser = await prisma.fc_user.findUnique({ where: { email } })
+  if (existingUser) {
+    return {
+      success: false,
+      error: "A user with this email already exists.",
+    }
+  }
+
+  // Hash password
+  const password_hash = await bcrypt.hash(password, 10)
+
+  // Create user in database
+  await prisma.fc_user.create({
+    data: {
+      username: name,
+      email,
+      password_hash,
+      is_male: true, // Default, update as needed
+    },
+  })
 
   return {
     success: true,
@@ -107,11 +115,11 @@ export async function completeOnboarding(prevState: AuthState | null, formData: 
   await new Promise((resolve) => setTimeout(resolve, 1000))
 
   const email = formData.get("email") as string
-  const companyId = formData.get("companyId") as string
+  const companyDescription = formData.get("companyId") as string
   const gender = formData.get("gender") as string
 
   // Basic validation
-  if (!email || !companyId || !gender) {
+  if (!email || !companyDescription || !gender) {
     return {
       success: false,
       error: "Please fill in all required fields",
@@ -120,7 +128,7 @@ export async function completeOnboarding(prevState: AuthState | null, formData: 
 
   // Validate company ID format (example: must be alphanumeric and 3-20 characters)
   const companyIdRegex = /^[a-zA-Z0-9]{3,20}$/
-  if (!companyIdRegex.test(companyId)) {
+  if (!companyIdRegex.test(companyDescription)) {
     return {
       success: false,
       error: "Company ID must be 3-20 alphanumeric characters",
@@ -135,6 +143,17 @@ export async function completeOnboarding(prevState: AuthState | null, formData: 
     }
   }
 
+  // Find company by description (adjust field name as needed)
+const company = await prisma.fc_company.findFirst({
+  where: { description: { equals: companyDescription, mode: "insensitive" } },
+})
+if (!company) {
+  return {
+    success: false,
+    error: "Company not found.",
+  }
+}
+
   // In a real app, you would:
   // 1. Update user profile in database with company ID and gender
   // 2. Set up user workspace based on company ID
@@ -144,7 +163,7 @@ export async function completeOnboarding(prevState: AuthState | null, formData: 
 
   console.log("User onboarding completed:", {
     email,
-    companyId,
+    companyDescription,
     gender,
     timestamp: new Date().toISOString(),
   })
@@ -156,33 +175,50 @@ export async function completeOnboarding(prevState: AuthState | null, formData: 
 }
 
 // New function to handle Google OAuth simulation
-export async function handleGoogleAuth(isLogin = false) {
-  // Simulate Google OAuth flow
-  await new Promise((resolve) => setTimeout(resolve, 1500))
+export async function handleGoogleAuth(googleProfile: {
+  id: string
+  email: string
+  name: string
+  picture?: string
+  verified_email?: boolean
+}) {
+  try {
+    // Check if user exists by email
+    let user = await prisma.fc_user.findUnique({
+      where: { email: googleProfile.email },
+    })
 
-  // Mock Google user data
-  const mockGoogleUser = {
-    id: "google_123456789",
-    email: "user@gmail.com",
-    name: "John Doe",
-    picture: "https://lh3.googleusercontent.com/a/default-user",
-    verified_email: true,
-  }
+    if (!user) {
+      // Create new user if not found
+      user = await prisma.fc_user.create({
+        data: {
+          email: googleProfile.email,
+          username: googleProfile.name,
+          password_hash: "", // No password for OAuth users
+          is_male: true, // Or infer from profile if available
+          // Add other fields as needed
+        },
+      })
+      // Optionally, trigger onboarding flow for new users
+      return {
+        success: true,
+        requiresOnboarding: true,
+        user,
+        error: undefined,
+      }
+    }
 
-  if (isLogin) {
-    // For login, check if user exists and redirect to dashboard
-    // In a real app, you would verify the user exists in your database
+    // User exists, proceed to dashboard
     return {
       success: true,
       redirect: "/dashboard",
-      user: mockGoogleUser,
+      user,
+      error: undefined,
     }
-  } else {
-    // For registration, proceed to onboarding
+  } catch (err: any) {
     return {
-      success: true,
-      requiresOnboarding: true,
-      user: mockGoogleUser,
+      success: false,
+      error: "Google authentication failed. Please try again.",
     }
   }
 }

@@ -1,0 +1,33 @@
+generator client {
+  provider = "prisma-client-js"
+  output   = "../lib/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model fc_company {
+  id          Int       @id @default(autoincrement())
+  description String    @db.VarChar(200)
+  fc_user     fc_user[]
+}
+
+model fc_user {
+  id            Int           @id @default(autoincrement())
+  username      String        @db.VarChar(100)
+  password_hash String        @db.VarChar(100)
+  email         String        @unique(map: "unique_email") @db.VarChar(100)
+  is_male       Boolean
+  company_id    Int?
+  user_type     Int?
+  fc_company    fc_company?   @relation(fields: [company_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  fc_user_type  fc_user_type? @relation(fields: [user_type], references: [id], onDelete: NoAction, onUpdate: NoAction)
+}
+
+model fc_user_type {
+  id          Int       @id @default(autoincrement())
+  description String    @db.VarChar(50)
+  fc_user     fc_user[]
+}

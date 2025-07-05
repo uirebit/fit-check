@@ -1,6 +1,8 @@
 "use client"
 
 import { useState } from "react"
+import { useGoogleLogin } from "@react-oauth/google"
+import axios from "axios"
 import { LoginForm } from "./login-form"
 import { RegisterForm } from "./register-form"
 import { OnboardingForm } from "./onboarding-form"
@@ -8,6 +10,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button"
 import { Separator } from "@/components/ui/separator"
 import { Chrome } from "lucide-react"
+import { handleGoogleAuth } from "@/app/actions/auth"
 
 type AuthStep = "auth" | "onboarding"
 
@@ -15,38 +18,49 @@ export function AuthSection() {
   const [isLogin, setIsLogin] = useState(true)
   const [authStep, setAuthStep] = useState<AuthStep>("auth")
   const [userEmail, setUserEmail] = useState<string>("")
+  const [loading, setLoading] = useState(false)
 
-  const handleGoogleSignUp = async () => {
-    // Simulate Google OAuth flow
-    await new Promise((resolve) => setTimeout(resolve, 1000))
+  const googleLogin = useGoogleLogin({
+    onSuccess: async (tokenResponse) => {
+      setLoading(true)
+      try {
+        // Fetch user profile from Google
+        const { data: googleProfile } = await axios.get(
+          "https://www.googleapis.com/oauth2/v3/userinfo",
+          { headers: { Authorization: `Bearer ${tokenResponse.access_token}` } }
+        )
 
-    if (isLogin) {
-      // For existing users, redirect directly to dashboard
-      const mockGoogleUser = {
-        email: "user@gmail.com",
-        name: "John Doe",
-        picture: "https://via.placeholder.com/40",
+        // Call your server action
+        const result = await handleGoogleAuth({
+          id: googleProfile.sub,
+          email: googleProfile.email,
+          name: googleProfile.name,
+          picture: googleProfile.picture,
+          verified_email: googleProfile.email_verified,
+        })
+
+        if (result.success === false && result.error) {
+          alert(result.error)
+        } else if (result.redirect) {
+          window.location.href = result.redirect
+        } else if (result.requiresOnboarding) {
+          setUserEmail(googleProfile.email)
+          setAuthStep("onboarding")
+        }
+      } catch (err) {
+        alert("Google sign-in failed.")
+      } finally {
+        setLoading(false)
       }
-
-      // In a real app, you would verify the user exists and redirect to dashboard
-      window.location.href = "/dashboard"
-    } else {
-      // For new users, go to onboarding
-      const mockGoogleUser = {
-        email: "user@gmail.com",
-        name: "John Doe",
-        picture: "https://via.placeholder.com/40",
-      }
-
-      setUserEmail(mockGoogleUser.email)
-      setAuthStep("onboarding")
-    }
-  }
+    },
+    onError: () => {
+      alert("Google sign-in failed.")
+      setLoading(false)
+    },
+  })
 
   const handleOnboardingComplete = () => {
-    // Reset to auth step or redirect to dashboard
     setAuthStep("auth")
-    // In a real app, you would redirect to dashboard here
     window.location.href = "/dashboard"
   }
 
@@ -75,10 +89,18 @@ export function AuthSection() {
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
-        {/* Google Sign In Button - Available for both login and registration */}
-        <Button variant="outline" className="w-full" onClick={handleGoogleSignUp}>
+        <Button
+          variant="outline"
+          className="w-full"
+          onClick={() => googleLogin()}
+          disabled={loading}
+        >
           <Chrome className="mr-2 h-4 w-4" />
-          {isLogin ? "Continue with Google" : "Sign up with Google"}
+          {loading
+            ? "Signing in with Google..."
+            : isLogin
+            ? "Continue with Google"
+            : "Sign up with Google"}
         </Button>
 
         <div className="relative">
