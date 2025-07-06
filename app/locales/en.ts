@@ -41,6 +41,32 @@ const en = {
     "clothing.workSocks": "Work Socks",
     "clothing.belt": "Work Belt",
     "clothing.rainCoat": "Rain Coat",
+    
+    // FC Cloth Database Items
+    "fc_cloth.work_pants": "Work Pants",
+    "fc_cloth.work_shirt": "Work Shirt",
+    "fc_cloth.work_jacket": "Work Jacket",
+    "fc_cloth.safety_jacket": "Safety Jacket",
+    "fc_cloth.protective_gloves": "Protective Gloves",
+    "fc_cloth.work_shoes": "Work Shoes",
+    "fc_cloth.safety_boots": "Safety Boots",
+    "fc_cloth.helmet": "Helmet",
+    "fc_cloth.ear_protection": "Ear Protection",
+    "fc_cloth.eye_protection": "Eye Protection",
+    "fc_cloth.face_shield": "Face Shield",
+    "fc_cloth.respirator_mask": "Respirator Mask",
+    "fc_cloth.high_visibility_vest": "High Visibility Vest",
+    "fc_cloth.thermal_underwear": "Thermal Underwear",
+    "fc_cloth.raincoat": "Raincoat",
+    "fc_cloth.apron": "Apron",
+    "fc_cloth.tool_belt": "Tool Belt",
+    "fc_cloth.coveralls": "Coveralls",
+    "fc_cloth.lab_coat": "Lab Coat",
+    "fc_cloth.knee_pads": "Knee Pads",
+    "fc_cloth.welding_jacket": "Welding Jacket",
+    "fc_cloth.welding_gloves": "Welding Gloves",
+    "fc_cloth.fire_resistant_suit": "Fire Resistant Suit",
+    "fc_cloth.cut_resistant_gloves": "Cut Resistant Gloves",
 
     // Categories
     "category.headwear": "headwear",
@@ -276,7 +302,18 @@ const en = {
     "settings.success.profileUpdated": "Profile updated successfully",
     "settings.error.loadFailed": "Failed to load settings. Please try again.",
     "settings.error.saveFailed": "Failed to save settings. Please try again.",
-    "settings.error.notAuthenticated": "You must be signed in to access settings."
+    "settings.error.notAuthenticated": "You must be signed in to access settings.",
+    
+    // Categories (updated with new format)
+    "category.clothing": "Clothing",
+    "category.head_protection": "Head Protection",
+    "category.hand_protection": "Hand Protection",
+    "category.eye_face_protection": "Eye & Face Protection",
+    "category.respiratory_protection": "Respiratory Protection",
+    "category.high_visibility": "High Visibility",
+    "category.thermal_clothing": "Thermal Clothing",
+    "category.welding": "Welding Equipment",
+    "category.lab_wear": "Laboratory Wear"
   }
 
   export default en;

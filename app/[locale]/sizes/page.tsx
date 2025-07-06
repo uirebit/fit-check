@@ -1,42 +1,96 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Badge } from "@/components/ui/badge"
 import { ClothingMeasurement } from "@/components/clothing-measurement"
 import { SavedSizes } from "@/components/saved-sizes"
-import { Zap, User, Settings, LogOut, Ruler, Save } from "lucide-react"
-
-const clothingTypes = [
-  { id: "work-hat", name: "Work Hat", category: "headwear" },
-  { id: "safety-helmet", name: "Safety Helmet", category: "headwear" },
-  { id: "work-shirt", name: "Work Shirt", category: "tops" },
-  { id: "polo-shirt", name: "Polo Shirt", category: "tops" },
-  { id: "work-jacket", name: "Work Jacket", category: "outerwear" },
-  { id: "safety-vest", name: "Safety Vest", category: "outerwear" },
-  { id: "work-pants", name: "Work Pants", category: "bottoms" },
-  { id: "work-shorts", name: "Work Shorts", category: "bottoms" },
-  { id: "coveralls", name: "Coveralls", category: "full-body" },
-  { id: "work-boots", name: "Work Boots", category: "footwear" },
-  { id: "safety-shoes", name: "Safety Shoes", category: "footwear" },
-  { id: "work-gloves", name: "Work Gloves", category: "accessories" },
-  { id: "work-socks", name: "Work Socks", category: "accessories" },
-  { id: "belt", name: "Work Belt", category: "accessories" },
-  { id: "rain-coat", name: "Rain Coat", category: "outerwear" },
-]
+import { Zap, User, Settings, LogOut, Ruler, Save, AlertCircle } from "lucide-react"
+import { getCompanyClothingItems, ClothingItem } from "@/app/actions/clothing"
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
+import { useLanguage } from "@/contexts/language-context"
 
 export default function SizesPage() {
   const [selectedClothing, setSelectedClothing] = useState<string>("")
   const [showSaved, setShowSaved] = useState(false)
-
-  // Mock user data - in real app, get from session/database
-  const userData = {
-    name: "John Doe",
-    email: "user@gmail.com",
+  const [clothingTypes, setClothingTypes] = useState<ClothingItem[]>([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)  
+  const { t } = useLanguage() // Get translations
+  
+  
+  // User data from localStorage
+  const [userData, setUserData] = useState({
+    name: "",
+    email: "",
     gender: "male" as "male" | "female",
-  }
+  })
+  
+  // Get user data from localStorage
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      try {
+        // Get user data from localStorage
+        const storedUser = localStorage.getItem("user_data");
+        if (storedUser) {
+          const parsedUser = JSON.parse(storedUser);
+          setUserData({
+            name: parsedUser.name || "",
+            email: parsedUser.email || "",
+            gender: parsedUser.is_male ? "male" : "female",
+          });
+        }
+      } catch (err) {
+        console.error("Error getting user data from localStorage:", err);
+      }
+    }
+  }, []);
+  
+  // Load clothing items from the database
+  useEffect(() => {
+    async function loadClothingItems() {
+      try {
+        setLoading(true)
+        
+        // Get user email from localStorage
+        let userEmail = userData.email;
+        
+        // If userData doesn't have email yet, try to get it directly from localStorage
+        if (!userEmail && typeof window !== "undefined") {
+          const storedUser = localStorage.getItem("user_data");
+          if (storedUser) {
+            const parsedUser = JSON.parse(storedUser);
+            userEmail = parsedUser.email;
+          }
+        }
+        
+        if (!userEmail) {
+          setError("User not authenticated. Please log in again.");
+          setLoading(false);
+          return;
+        }
+        
+        // Pass the email to the server action
+        const items = await getCompanyClothingItems(userEmail);
+        
+        if (items.length > 0) {
+          setClothingTypes(items);
+          setError(null);
+        } else {
+          setError("No clothing items found for your company");
+        }
+      } catch (err) {
+        console.error("Failed to load clothing items:", err)
+        setError("Failed to load clothing items. Please try again.")
+      } finally {
+        setLoading(false)
+      }
+    }
+    
+    loadClothingItems()
+  }, [userData.email])
 
   // Clear form when clothing type changes
   const handleClothingChange = (value: string) => {
@@ -107,23 +161,43 @@ export default function SizesPage() {
                 <CardDescription>Choose the type of work clothing you want to measure</CardDescription>
               </CardHeader>
               <CardContent>
-                <Select value={selectedClothing} onValueChange={handleClothingChange}>
-                  <SelectTrigger className="w-full">
-                    <SelectValue placeholder="Select a clothing type..." />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {clothingTypes.map((type) => (
-                      <SelectItem key={type.id} value={type.id}>
-                        <div className="flex items-center justify-between w-full">
-                          <span>{type.name}</span>
-                          <Badge variant="secondary" className="ml-2">
-                            {type.category}
-                          </Badge>
-                        </div>
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                {loading ? (
+                  <div className="flex items-center justify-center p-4">
+                    <div className="h-5 w-5 animate-spin rounded-full border-b-2 border-blue-600"></div>
+                    <span className="ml-2 text-sm text-gray-600">Loading clothing types...</span>
+                  </div>
+                ) : error ? (
+                  <Alert variant="destructive">
+                    <AlertCircle className="h-4 w-4" />
+                    <AlertTitle>Error</AlertTitle>
+                    <AlertDescription>{error}</AlertDescription>
+                  </Alert>
+                ) : clothingTypes.length === 0 ? (
+                  <Alert>
+                    <AlertCircle className="h-4 w-4" />
+                    <AlertTitle>No items found</AlertTitle>
+                    <AlertDescription>No clothing items are available for your company. Please contact your administrator.</AlertDescription>
+                  </Alert>
+                ) : (
+                  <Select value={selectedClothing} onValueChange={handleClothingChange}>
+                    <SelectTrigger className="w-full">
+                      <SelectValue placeholder={t('main.selectPlaceholder')} />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {clothingTypes.map((type) => (
+                        <SelectItem key={type.id} value={type.id}>
+                          <div className="flex items-center justify-between w-full">
+                            <span>{t(type.translationKey || "")}</span>
+                            <Badge variant="secondary" className="ml-2">
+                              {type.categoryTranslationKey ? t(type.categoryTranslationKey) : 
+                               (type.category_description || (type.category_id ? `Category ${type.category_id}` : t("category.other") || "Other"))}
+                            </Badge>
+                          </div>
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                )}
               </CardContent>
             </Card>
 
@@ -132,7 +206,7 @@ export default function SizesPage() {
               <ClothingMeasurement
                 key={selectedClothing} // This forces component remount when clothing type changes
                 clothingType={selectedClothing}
-                clothingName={clothingTypes.find((t) => t.id === selectedClothing)?.name || ""}
+                clothingName={clothingTypes.find((t) => t.id === selectedClothing)?.translationKey || ""}
                 userGender={userData.gender}
               />
             )}

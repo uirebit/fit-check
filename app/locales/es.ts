@@ -39,6 +39,32 @@ const es = {
     "clothing.workSocks": "Calcetines de Trabajo",
     "clothing.belt": "Cinturón de Trabajo",
     "clothing.rainCoat": "Impermeable",
+    
+    // FC Cloth Database Items
+    "fc_cloth.work_pants": "Pantalones de Trabajo",
+    "fc_cloth.work_shirt": "Camisa de Trabajo",
+    "fc_cloth.work_jacket": "Chaqueta de Trabajo",
+    "fc_cloth.safety_jacket": "Chaqueta de Seguridad",
+    "fc_cloth.protective_gloves": "Guantes de Protección",
+    "fc_cloth.work_shoes": "Zapatos de Trabajo",
+    "fc_cloth.safety_boots": "Botas de Seguridad",
+    "fc_cloth.helmet": "Casco",
+    "fc_cloth.ear_protection": "Protección Auditiva",
+    "fc_cloth.eye_protection": "Protección Ocular",
+    "fc_cloth.face_shield": "Protector Facial",
+    "fc_cloth.respirator_mask": "Mascarilla Respiratoria",
+    "fc_cloth.high_visibility_vest": "Chaleco de Alta Visibilidad",
+    "fc_cloth.thermal_underwear": "Ropa Interior Térmica",
+    "fc_cloth.raincoat": "Impermeable",
+    "fc_cloth.apron": "Delantal",
+    "fc_cloth.tool_belt": "Cinturón de Herramientas",
+    "fc_cloth.coveralls": "Mono de Trabajo",
+    "fc_cloth.lab_coat": "Bata de Laboratorio",
+    "fc_cloth.knee_pads": "Rodilleras",
+    "fc_cloth.welding_jacket": "Chaqueta para Soldadura",
+    "fc_cloth.welding_gloves": "Guantes para Soldadura",
+    "fc_cloth.fire_resistant_suit": "Traje Ignífugo",
+    "fc_cloth.cut_resistant_gloves": "Guantes Anticorte",
 
     // Categories
     "category.headwear": "sombreros",
@@ -282,7 +308,18 @@ const es = {
     "settings.success.profileUpdated": "Perfil actualizado con éxito",
     "settings.error.loadFailed": "Error al cargar la configuración. Por favor, inténtalo de nuevo.",
     "settings.error.saveFailed": "Error al guardar la configuración. Por favor, inténtalo de nuevo.",
-    "settings.error.notAuthenticated": "Debes iniciar sesión para acceder a la configuración."
+    "settings.error.notAuthenticated": "Debes iniciar sesión para acceder a la configuración.",
+    
+    // Categories (new)
+    "category.clothing": "Ropa",
+    "category.head_protection": "Protección para la Cabeza",
+    "category.hand_protection": "Protección para las Manos",
+    "category.eye_face_protection": "Protección para Ojos y Cara",
+    "category.respiratory_protection": "Protección Respiratoria",
+    "category.high_visibility": "Alta Visibilidad",
+    "category.thermal_clothing": "Ropa Térmica",
+    "category.welding": "Equipamiento para Soldadura",
+    "category.lab_wear": "Ropa de Laboratorio"
   }
 
   export default es;

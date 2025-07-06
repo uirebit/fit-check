@@ -9,26 +9,82 @@ datasource db {
 }
 
 model fc_company {
-  id          Int       @id @default(autoincrement())
-  description String    @db.VarChar(200)
-  fc_user     fc_user[]
+  id               Int                @id @default(autoincrement())
+  description      String             @db.VarChar(200)
+  fc_company_cloth fc_company_cloth[]
+  fc_user          fc_user[]
 }
 
 model fc_user {
-  id            Int           @id @default(autoincrement())
-  username      String        @db.VarChar(100)
-  password_hash String        @db.VarChar(100)
-  email         String        @unique(map: "unique_email") @db.VarChar(100)
-  is_male       Boolean
-  company_id    Int?
-  user_type     Int?
-  creation_date DateTime?     @default(now()) @db.Timestamp(6)
-  fc_company    fc_company?   @relation(fields: [company_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  fc_user_type  fc_user_type? @relation(fields: [user_type], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  id                    Int                     @id @default(autoincrement())
+  username              String                  @db.VarChar(100)
+  password_hash         String                  @db.VarChar(100)
+  email                 String                  @unique(map: "unique_email") @db.VarChar(100)
+  is_male               Boolean
+  company_id            Int?
+  user_type             Int?                    @default(3)
+  creation_date         DateTime?               @default(now()) @db.Timestamp(6)
+  fc_cloth_measurements fc_cloth_measurements[]
+  fc_company            fc_company?             @relation(fields: [company_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  fc_user_type          fc_user_type?           @relation(fields: [user_type], references: [id], onDelete: NoAction, onUpdate: NoAction)
 }
 
 model fc_user_type {
   id          Int       @id @default(autoincrement())
   description String    @db.VarChar(50)
   fc_user     fc_user[]
+}
+
+model fc_cloth {
+  id                       Int                        @id @default(autoincrement())
+  category_id              Int?
+  description              String                     @unique @db.VarChar(100)
+  fc_cloth_category        fc_cloth_category?         @relation(fields: [category_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  fc_cloth_measure_mapping fc_cloth_measure_mapping[]
+  fc_cloth_measurements    fc_cloth_measurements[]
+  fc_company_cloth         fc_company_cloth[]
+}
+
+model fc_cloth_category {
+  id          Int        @id @default(autoincrement())
+  description String     @unique @db.VarChar(100)
+  fc_cloth    fc_cloth[]
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model fc_cloth_measure_mapping {
+  id             Int       @id @default(autoincrement())
+  cloth_id       Int?
+  measure_number Int?
+  measure_key    String?   @db.VarChar(100)
+  fc_cloth       fc_cloth? @relation(fields: [cloth_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+}
+
+model fc_cloth_measurement_value {
+  id                    Int                   @id @default(autoincrement())
+  measurement_id        Int
+  measure_number        Int
+  measure_value         Int?
+  fc_cloth_measurements fc_cloth_measurements @relation(fields: [measurement_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+}
+
+model fc_cloth_measurements {
+  id                         Int                          @id @default(autoincrement())
+  user_id                    Int
+  cloth_id                   Int
+  created_at                 DateTime?                    @default(now()) @db.Timestamp(6)
+  fc_cloth_measurement_value fc_cloth_measurement_value[]
+  fc_cloth                   fc_cloth                     @relation(fields: [cloth_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  fc_user                    fc_user                      @relation(fields: [user_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+}
+
+model fc_company_cloth {
+  id         Int        @id @default(autoincrement())
+  company_id Int
+  cloth_id   Int
+  is_active  Boolean?   @default(true)
+  fc_cloth   fc_cloth   @relation(fields: [cloth_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  fc_company fc_company @relation(fields: [company_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@unique([company_id, cloth_id])
 }
