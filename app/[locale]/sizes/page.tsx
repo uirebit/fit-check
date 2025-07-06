@@ -10,7 +10,10 @@ import { SavedSizes } from "@/components/saved-sizes"
 import { Zap, User, Settings, LogOut, Ruler, Save, AlertCircle } from "lucide-react"
 import { getCompanyClothingItems, ClothingItem } from "@/app/actions/clothing"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
+import { Separator } from "@/components/ui/separator"
 import { useLanguage } from "@/contexts/language-context"
+
+// Using translation keys directly in error states
 
 export default function SizesPage() {
   const [selectedClothing, setSelectedClothing] = useState<string>("")
@@ -67,7 +70,7 @@ export default function SizesPage() {
         }
         
         if (!userEmail) {
-          setError("User not authenticated. Please log in again.");
+          setError("error.notAuthenticated");
           setLoading(false);
           return;
         }
@@ -79,11 +82,11 @@ export default function SizesPage() {
           setClothingTypes(items);
           setError(null);
         } else {
-          setError("No clothing items found for your company");
+          setError("error.noClothingFound");
         }
       } catch (err) {
         console.error("Failed to load clothing items:", err)
-        setError("Failed to load clothing items. Please try again.")
+        setError("error.loadingFailed")
       } finally {
         setLoading(false)
       }
@@ -96,6 +99,59 @@ export default function SizesPage() {
   const handleClothingChange = (value: string) => {
     setSelectedClothing(value)
   }
+  
+  // Sort clothing items by category and then by name
+  const getSortedClothingItems = (): ClothingItem[] => {
+    if (!clothingTypes.length) return [];
+    
+    return clothingTypes.slice().sort((a, b) => {
+      // Get translated category names for sorting
+      const categoryA = a.categoryTranslationKey ? t(a.categoryTranslationKey) : 
+                       (a.category_description || String(a.category_id || "ZZZ"));
+      const categoryB = b.categoryTranslationKey ? t(b.categoryTranslationKey) : 
+                       (b.category_description || String(b.category_id || "ZZZ"));
+      
+      // First sort by category
+      const categoryCompare = categoryA.localeCompare(categoryB, undefined, { sensitivity: 'base' });
+      if (categoryCompare !== 0) {
+        return categoryCompare;
+      }
+      
+      // If same category, sort by clothing name
+      const nameA = t(a.translationKey || "");
+      const nameB = t(b.translationKey || "");
+      return nameA.localeCompare(nameB, undefined, { sensitivity: 'base' });
+    });
+  };
+  
+  // Group clothing items by category
+  const getGroupedClothingItems = (): { category: string, items: ClothingItem[] }[] => {
+    const sorted = getSortedClothingItems();
+    const grouped: { [key: string]: { category: string, items: ClothingItem[] } } = {};
+    
+    sorted.forEach(item => {
+      const categoryKey = item.categoryTranslationKey || 
+                         (item.category_description ? `category.${item.category_description.toLowerCase().replace(/\s+/g, "_")}` : 
+                         (item.category_id ? `category.${item.category_id}` : "category.other"));
+      
+      const categoryLabel = item.categoryTranslationKey ? t(item.categoryTranslationKey) : 
+                           (item.category_description || (item.category_id ? `Category ${item.category_id}` : t("category.other")));
+      
+      if (!grouped[categoryKey]) {
+        grouped[categoryKey] = {
+          category: categoryLabel,
+          items: []
+        };
+      }
+      
+      grouped[categoryKey].items.push(item);
+    });
+    
+    // Convert the object to array and sort by category name
+    return Object.values(grouped).sort((a, b) => 
+      a.category.localeCompare(b.category, undefined, { sensitivity: 'base' })
+    );
+  };
 
   const handleSignOut = () => {
     // In a real app, you would:
@@ -113,12 +169,12 @@ export default function SizesPage() {
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-2">
               <Zap className="h-8 w-8 text-blue-600" />
-              <span className="text-2xl font-bold text-gray-900">WorkWear Sizes</span>
+              <span className="text-2xl font-bold text-gray-900">{t("header.title")}</span>
             </div>
             <div className="flex items-center space-x-4">
               <Button variant="ghost" size="sm" onClick={() => setShowSaved(!showSaved)}>
                 <Save className="h-4 w-4 mr-2" />
-                {showSaved ? "Add Sizes" : "Saved Sizes"}
+                {showSaved ? t("header.addSizes") : t("header.savedSizes")}
               </Button>
               <div className="flex items-center space-x-2">
                 <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
@@ -128,11 +184,11 @@ export default function SizesPage() {
               </div>
               <Button variant="ghost" size="sm">
                 <Settings className="h-4 w-4 mr-2" />
-                Settings
+                {t("header.settings")}
               </Button>
               <Button variant="ghost" size="sm" onClick={handleSignOut}>
                 <LogOut className="h-4 w-4 mr-2" />
-                Sign Out
+                {t("header.signOut")}
               </Button>
             </div>
           </div>
@@ -145,9 +201,9 @@ export default function SizesPage() {
         ) : (
           <>
             <div className="mb-8">
-              <h1 className="text-3xl font-bold text-gray-900 mb-2">Manage Your Work Clothing Sizes</h1>
+              <h1 className="text-3xl font-bold text-gray-900 mb-2">{t("main.title")}</h1>
               <p className="text-gray-600">
-                Select a clothing type and follow the measurement instructions to get your perfect fit.
+                {t("main.subtitle")}
               </p>
             </div>
 
@@ -156,44 +212,62 @@ export default function SizesPage() {
               <CardHeader>
                 <CardTitle className="flex items-center">
                   <Ruler className="h-5 w-5 mr-2 text-blue-600" />
-                  Select Clothing Type
+                  {t("main.selectClothing")}
                 </CardTitle>
-                <CardDescription>Choose the type of work clothing you want to measure</CardDescription>
+                <CardDescription>{t("main.selectClothingDesc")}</CardDescription>
               </CardHeader>
               <CardContent>
                 {loading ? (
                   <div className="flex items-center justify-center p-4">
                     <div className="h-5 w-5 animate-spin rounded-full border-b-2 border-blue-600"></div>
-                    <span className="ml-2 text-sm text-gray-600">Loading clothing types...</span>
+                    <span className="ml-2 text-sm text-gray-600">{t("loading.clothingTypes")}</span>
                   </div>
                 ) : error ? (
                   <Alert variant="destructive">
                     <AlertCircle className="h-4 w-4" />
-                    <AlertTitle>Error</AlertTitle>
-                    <AlertDescription>{error}</AlertDescription>
+                    <AlertTitle>{t("error.title")}</AlertTitle>
+                    <AlertDescription>{t(error || "")}</AlertDescription>
                   </Alert>
                 ) : clothingTypes.length === 0 ? (
                   <Alert>
                     <AlertCircle className="h-4 w-4" />
-                    <AlertTitle>No items found</AlertTitle>
-                    <AlertDescription>No clothing items are available for your company. Please contact your administrator.</AlertDescription>
+                    <AlertTitle>{t("error.noItemsFound")}</AlertTitle>
+                    <AlertDescription>{t("error.noCompanyItems")}</AlertDescription>
                   </Alert>
                 ) : (
                   <Select value={selectedClothing} onValueChange={handleClothingChange}>
                     <SelectTrigger className="w-full">
                       <SelectValue placeholder={t('main.selectPlaceholder')} />
                     </SelectTrigger>
-                    <SelectContent>
-                      {clothingTypes.map((type) => (
-                        <SelectItem key={type.id} value={type.id}>
-                          <div className="flex items-center justify-between w-full">
-                            <span>{t(type.translationKey || "")}</span>
-                            <Badge variant="secondary" className="ml-2">
-                              {type.categoryTranslationKey ? t(type.categoryTranslationKey) : 
-                               (type.category_description || (type.category_id ? `Category ${type.category_id}` : t("category.other") || "Other"))}
-                            </Badge>
+                    <SelectContent className="max-h-80">
+                      {getGroupedClothingItems().map((group, groupIndex) => (
+                        <div key={`group-${groupIndex}`}>
+                          {/* Category Heading */}
+                          <div className="px-2 py-1.5 text-sm font-semibold bg-slate-100 text-slate-800 sticky top-0 z-10">
+                            {group.category}
                           </div>
-                        </SelectItem>
+                          
+                          {/* Category Items */}
+                          {group.items
+                            .sort((a, b) => {
+                              const nameA = t(a.translationKey || "");
+                              const nameB = t(b.translationKey || "");
+                              return nameA.localeCompare(nameB, undefined, { sensitivity: 'base' });
+                            })
+                            .map((type) => (
+                              <SelectItem key={type.id} value={type.id}>
+                                <div className="flex items-center w-full">
+                                  <span>{t(type.translationKey || "")}</span>
+                                </div>
+                              </SelectItem>
+                            ))
+                          }
+                          
+                          {/* Separator between categories */}
+                          {groupIndex < getGroupedClothingItems().length - 1 && (
+                            <Separator className="my-1" />
+                          )}
+                        </div>
                       ))}
                     </SelectContent>
                   </Select>

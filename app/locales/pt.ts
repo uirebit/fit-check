@@ -317,7 +317,19 @@ const pt = {
     "category.high_visibility": "Alta Visibilidade",
     "category.thermal_clothing": "Vestuário Térmico",
     "category.welding": "Equipamento de Soldagem",
-    "category.lab_wear": "Vestuário de Laboratório"
+    "category.lab_wear": "Vestuário de Laboratório",
+    "category.other": "Outros",
+    
+    // Error messages in sizes page
+    "error.title": "Erro",
+    "error.noItemsFound": "Nenhum item encontrado",
+    "error.noCompanyItems": "Não há itens de vestuário disponíveis para sua empresa. Entre em contato com o administrador.",
+    "error.notAuthenticated": "Usuário não autenticado. Por favor, faça login novamente.",
+    "error.loadingFailed": "Falha ao carregar itens de vestuário. Por favor, tente novamente.",
+    "error.noClothingFound": "Nenhum item de vestuário encontrado para sua empresa",
+    
+    // Loading states
+    "loading.clothingTypes": "Carregando tipos de vestuário..."
   }
 
 export default pt;

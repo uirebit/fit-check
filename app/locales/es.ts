@@ -319,7 +319,19 @@ const es = {
     "category.high_visibility": "Alta Visibilidad",
     "category.thermal_clothing": "Ropa Térmica",
     "category.welding": "Equipamiento para Soldadura",
-    "category.lab_wear": "Ropa de Laboratorio"
+    "category.lab_wear": "Ropa de Laboratorio",
+    "category.other": "Otros",
+    
+    // Error messages in sizes page
+    "error.title": "Error",
+    "error.noItemsFound": "No se encontraron elementos",
+    "error.noCompanyItems": "No hay prendas de ropa disponibles para tu empresa. Contacta con tu administrador.",
+    "error.notAuthenticated": "Usuario no autenticado. Por favor, inicia sesión nuevamente.",
+    "error.loadingFailed": "Error al cargar las prendas de ropa. Por favor, inténtalo de nuevo.",
+    "error.noClothingFound": "No se encontraron prendas de ropa para tu empresa",
+    
+    // Loading states
+    "loading.clothingTypes": "Cargando tipos de ropa..."
   }
 
   export default es;

@@ -313,7 +313,19 @@ const en = {
     "category.high_visibility": "High Visibility",
     "category.thermal_clothing": "Thermal Clothing",
     "category.welding": "Welding Equipment",
-    "category.lab_wear": "Laboratory Wear"
+    "category.lab_wear": "Laboratory Wear",
+    "category.other": "Other",
+
+    // Error messages in sizes page
+    "error.title": "Error",
+    "error.noItemsFound": "No items found",
+    "error.noCompanyItems": "No clothing items are available for your company. Please contact your administrator.",
+    "error.notAuthenticated": "User not authenticated. Please log in again.",
+    "error.loadingFailed": "Failed to load clothing items. Please try again.",
+    "error.noClothingFound": "No clothing items found for your company",
+    
+    // Loading states
+    "loading.clothingTypes": "Loading clothing types..."
   }
 
   export default en;
