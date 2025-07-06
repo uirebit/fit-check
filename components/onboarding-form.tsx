@@ -1,3 +1,6 @@
+
+
+
 "use client"
 
 import { useActionState } from "react"
@@ -9,6 +12,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert"
 import { completeOnboarding } from "@/app/actions/auth"
 import { Loader2, Building, User } from "lucide-react"
 import { useLanguage } from "@/contexts/language-context"
+import { useEffect } from "react"
 
 interface OnboardingFormProps {
   userEmail: string
@@ -16,19 +20,48 @@ interface OnboardingFormProps {
 }
 
 export function OnboardingForm({ userEmail, onComplete }: OnboardingFormProps) {
-  const { t } = useLanguage()
   const [state, action, isPending] = useActionState(completeOnboarding, null)
 
+  const { t, language } = useLanguage();
   // Handle successful completion
-  if (state?.success) {
-    setTimeout(() => {
-      onComplete()
-    }, 1500)
-  }
+  useEffect(() => {
+    async function completeOnboardingProcess() {
+      if (state?.success) {
+        // If we have user data from the server, store it
+        if (state.userData) {
+          localStorage.setItem("user_data", JSON.stringify(state.userData));
+        }
+        
+        // Store session token if available
+        if (state.sessionToken) {
+          localStorage.setItem("auth_token", state.sessionToken);
+          localStorage.setItem("user_session", "active");
+          
+          // Set cookies for server-side auth
+          try {
+            await fetch('/api/auth/cookie', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ token: state.sessionToken, session: 'active' })
+            });
+          } catch (cookieError) {
+            console.error("Failed to set auth cookies", cookieError);
+          }
+        }
+        
+        setTimeout(() => {
+          onComplete();
+        }, 1500);
+      }
+    }
+    
+    completeOnboardingProcess();
+  }, [state, onComplete]);
 
   return (
     <form action={action} className="space-y-6">
       <input type="hidden" name="email" value={userEmail} />
+      <input type="hidden" name="locale" value={language} />
 
       {/* Welcome message */}
       <div className="text-center space-y-2">
@@ -81,7 +114,7 @@ export function OnboardingForm({ userEmail, onComplete }: OnboardingFormProps) {
 
       {state?.error && (
         <Alert variant="destructive">
-          <AlertDescription>{state.error}</AlertDescription>
+          <AlertDescription>{state.errorLocale ? t(state.error) : state.error}</AlertDescription>
         </Alert>
       )}
 

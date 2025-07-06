@@ -108,6 +108,7 @@ const es = {
     "saved.saved": "Guardado",
     "saved.edit": "Editar",
     "saved.loading": "Cargando tus tallas guardadas...",
+    "saved.confirmDelete": "¿Estás seguro de que deseas eliminar esta información de talla?",
 
     // Language selector
     "language.select": "Idioma",
@@ -117,22 +118,26 @@ const es = {
 
     // Login and Sign Up
     "login.form.email": "Correo electrónico",
-    "login.form.placeholderemail": "Ingresa tu correo electrónico",
     "login.form.password": "Contraseña",
-    "login.form.placeholderpassword": "Ingresa tu contraseña",
     "login.form.submit": "Iniciar sesión",
     "login.form.signingin": "Iniciando sesión...",
     "login.form.forgotPassword": "¿Olvidaste tu contraseña?",
     "login.form.error": "Error al iniciar sesión. Por favor verifica tus credenciales e intenta de nuevo.",
     "login.form.success": "Sesión iniciada con éxito. Redireccionando...",
+    "login.form.emptyFields": "Por favor completa todos los campos",
+    "login.form.invalidCredentials": "Correo electrónico o contraseña inválidos.",
+    "login.form.serverError": "Ocurrió un error durante el inicio de sesión. Por favor intenta de nuevo más tarde.",
     
     "register.form.email": "Correo electrónico",
+    "register.form.name": "Nombre completo",
+    "register.form.placeholdername": "Ingresa tu nombre completo",
     "register.form.placeholderemail": "Ingresa tu correo electrónico",
     "register.form.password": "Contraseña",
     "register.form.placeholderpassword": "Ingresa tu contraseña",
     "register.form.confirmPassword": "Confirmar contraseña",
     "register.form.placeholderconfirmPassword": "Confirma tu contraseña",
     "register.form.submit": "Registrarse",
+    "register.form.creating": "Creando cuenta...",
     "register.form.success": "Registro exitoso. Redireccionando...",
     "register.form.error": "Error durante el registro. Por favor intenta de nuevo.",
     "register.form.terms": "Acepto los Términos de Servicio y Política de Privacidad",
@@ -162,15 +167,34 @@ const es = {
     "onboarding.completeprofile.description": "Por favor proporciona información adicional para completar tu registro",
     "onboarding.welcome": "¡Bienvenido! Solo unos detalles más para comenzar.",
     "onboarding.companyId": "ID de Empresa",
+    "onboarding.companyName": "Nombre de la Empresa",
     "onboarding.companyIdPlaceholder": "Ingresa el ID de tu empresa",
     "onboarding.companyIdHelp": "Esto nos ayuda a identificar tu organización y configurar tu espacio de trabajo.",
+    "onboarding.error.invalidCompanyId": "El ID de empresa debe tener entre 3 y 20 caracteres alfanuméricos",
+    "onboarding.error.userNotFound": "Usuario no encontrado. Por favor regístrate o inicia sesión de nuevo.",
+    "onboarding.error.serverError": "Ocurrió un error al actualizar tu perfil. Por favor intenta de nuevo.",
     "onboarding.gender": "Género",
     "onboarding.genderMale": "Masculino",
     "onboarding.genderFemale": "Femenino",
     "onboarding.successMessage": "¡Perfil completado con éxito! Redirigiendo al panel de control...",
     "onboarding.completingSetup": "Completando configuración...",
     "onboarding.redirecting": "Redirigiendo...",
-    "onboarding.completeSetup": "Completar Configuración"
+    "onboarding.completeSetup": "Completar Configuración",
+    
+    // Dashboard
+    "dashboard.welcomeBack": "Bienvenido de nuevo",
+    "dashboard.overview": "Aquí está la vista general personalizada de tu panel.",
+    "dashboard.profileInformation": "Información de Perfil",
+    "dashboard.accountDetails": "Los detalles de tu cuenta e información de empresa",
+    "dashboard.memberSince": "Miembro Desde",
+    "dashboard.clothingSizes": "Tallas de Ropa",
+    "dashboard.manageSizesDesc": "Gestiona las medidas y tallas de tu ropa de trabajo",
+    "dashboard.manageSizes": "Gestionar Tallas",
+    "dashboard.accountSettings": "Configuración de Cuenta",
+    "dashboard.updateProfile": "Actualiza tu perfil y preferencias",
+
+    "login.form.placeholderemail": "Ingresa tu correo electrónico",
+    "login.form.placeholderpassword": "Ingresa tu contraseña",
   }
 
   export default es;

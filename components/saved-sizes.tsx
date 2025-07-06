@@ -7,6 +7,7 @@ import { Badge } from "@/components/ui/badge"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { getSavedSizes, deleteSavedSize } from "@/app/actions/sizes"
 import { Trash2, Edit, Package, Calendar } from "lucide-react"
+import { useLanguage } from "@/contexts/language-context"
 
 interface SavedSize {
   id: string
@@ -20,6 +21,7 @@ interface SavedSize {
 export function SavedSizes() {
   const [savedSizes, setSavedSizes] = useState<SavedSize[]>([])
   const [loading, setLoading] = useState(true)
+  const { t } = useLanguage()
 
   useEffect(() => {
     loadSavedSizes()
@@ -37,7 +39,7 @@ export function SavedSizes() {
   }
 
   const handleDelete = async (id: string) => {
-    if (confirm("Are you sure you want to delete this size information?")) {
+    if (confirm(t("saved.confirmDelete") || "Are you sure you want to delete this size information?")) {
       try {
         await deleteSavedSize(id)
         setSavedSizes(savedSizes.filter((size) => size.id !== id))
@@ -52,7 +54,7 @@ export function SavedSizes() {
       <div className="flex items-center justify-center py-12">
         <div className="text-center">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4"></div>
-          <p className="text-gray-600">Loading your saved sizes...</p>
+          <p className="text-gray-600">{t("saved.loading")}</p>
         </div>
       </div>
     )
@@ -61,10 +63,9 @@ export function SavedSizes() {
   return (
     <div className="space-y-6">
       <div className="mb-8">
-        <h1 className="text-3xl font-bold text-gray-900 mb-2">Your Saved Sizes</h1>
+        <h1 className="text-3xl font-bold text-gray-900 mb-2">{t("saved.title")}</h1>
         <p className="text-gray-600">
-          Manage your work clothing size information. You have {savedSizes.length} saved size
-          {savedSizes.length !== 1 ? "s" : ""}.
+          {t("saved.subtitle").replace("{count}", savedSizes.length.toString()).replace("{plural}", savedSizes.length !== 1 ? "s" : "")}
         </p>
       </div>
 
@@ -72,7 +73,7 @@ export function SavedSizes() {
         <Alert>
           <Package className="h-4 w-4" />
           <AlertDescription>
-            You haven't saved any clothing sizes yet. Start by selecting a clothing type and entering your measurements.
+            {t("saved.noSizes")}
           </AlertDescription>
         </Alert>
       ) : (
@@ -81,23 +82,23 @@ export function SavedSizes() {
             <Card key={size.id} className="relative">
               <CardHeader>
                 <div className="flex items-center justify-between">
-                  <CardTitle className="text-lg">{size.clothingName}</CardTitle>
+                  <CardTitle className="text-lg">{t(`clothing.${size.clothingType}`) || size.clothingName}</CardTitle>
                   <Badge variant="default" className="text-lg">
                     {size.calculatedSize}
                   </Badge>
                 </div>
                 <CardDescription className="flex items-center text-sm">
                   <Calendar className="h-4 w-4 mr-1" />
-                  Saved {new Date(size.savedAt).toLocaleDateString()}
+                  {t("saved.saved")} {new Date(size.savedAt).toLocaleDateString()}
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="space-y-2">
-                  <h4 className="font-medium text-gray-900">Measurements:</h4>
+                  <h4 className="font-medium text-gray-900">{t("saved.measurements")}</h4>
                   <div className="space-y-1">
                     {Object.entries(size.measurements).map(([key, value]) => (
                       <div key={key} className="flex justify-between text-sm">
-                        <span className="text-gray-600 capitalize">{key.replace(/([A-Z])/g, " $1").trim()}:</span>
+                        <span className="text-gray-600 capitalize">{t(`measure.${key}`) || key.replace(/([A-Z])/g, " $1").trim()}:</span>
                         <span className="font-medium">{value} cm</span>
                       </div>
                     ))}
@@ -107,7 +108,7 @@ export function SavedSizes() {
                 <div className="flex space-x-2 pt-4">
                   <Button variant="outline" size="sm" className="flex-1">
                     <Edit className="h-4 w-4 mr-1" />
-                    Edit
+                    {t("saved.edit")}
                   </Button>
                   <Button
                     variant="outline"

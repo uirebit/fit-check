@@ -109,6 +109,7 @@ const en = {
     "saved.saved": "Saved",
     "saved.edit": "Edit",
     "saved.loading": "Loading your saved sizes...",
+    "saved.confirmDelete": "Are you sure you want to delete this size information?",
 
     // Language selector
     "language.select": "Language",
@@ -118,21 +119,25 @@ const en = {
 
     //Login and Sign Up
     "login.form.email": "Email",
-    "login.form.placeholderemail": "Enter your email",
     "login.form.password": "Password",
-    "login.form.placeholderpassword": "Enter your password",
     "login.form.submit": "Sign in",
     "login.form.signingin": "Sign in...",
     "login.form.forgotPassword": "Forgot your password?",
     "login.form.error": "Error signing in. Please check your credentials and try again.",
     "login.form.success": "Successfully signed in. Redirecting...",
+    "login.form.emptyFields": "Please fill in all fields",
+    "login.form.invalidCredentials": "Invalid email or password.",
+    "login.form.serverError": "An error occurred during login. Please try again later.",
     "register.form.email": "Email",
+    "register.form.name": "Full Name",
+    "register.form.placeholdername": "Enter your full name",
     "register.form.placeholderemail": "Enter your email",
     "register.form.password": "Password",
     "register.form.placeholderpassword": "Enter your password",
     "register.form.confirmPassword": "Confirm Password",
     "register.form.placeholderconfirmPassword": "Confirm your password",
     "register.form.submit": "Sign up",
+    "register.form.creating": "Creating account...",
     "register.form.success": "Registration successful. Redirecting...",
     "register.form.error": "Error during registration. Please try again.",
     "register.form.terms": "I agree to the Terms of Service and Privacy Policy",
@@ -150,8 +155,12 @@ const en = {
     "onboarding.completeprofile.description" : "Please provide some additional information to complete your registration",
     "onboarding.welcome" : "Welcome! Just a few more details to get started.",
     "onboarding.companyId" : "Company ID",
+    "onboarding.companyName" : "Company Name",
     "onboarding.companyId.placeholder" : "Enter your company ID",
     "onboarding.companyId.help" : "This helps us identify your organization and set up your workspace.",
+    "onboarding.error.invalidCompanyId": "Company ID must be 3-20 alphanumeric characters",
+    "onboarding.error.userNotFound": "User not found. Please sign up or sign in again.",
+    "onboarding.error.serverError": "An error occurred while updating your profile. Please try again.",
     "onboarding.gender" : "Gender",
     "onboarding.gender.male" : "Male",
     "onboarding.gender.female" : "Female",
@@ -177,7 +186,23 @@ const en = {
     "onboarding.genderMale": "Male",
     "onboarding.genderFemale": "Female",
     "onboarding.successMessage": "Profile completed successfully! Redirecting to dashboard...",
-    "onboarding.completingSetup": "Completing setup...",    
+    "onboarding.completingSetup": "Completing setup...",
+    
+    // Dashboard
+    "dashboard.welcomeBack": "Welcome back",
+    "dashboard.overview": "Here's your personalized dashboard overview.",
+    "dashboard.profileInformation": "Profile Information",
+    "dashboard.accountDetails": "Your account details and company information",
+    "dashboard.memberSince": "Member Since",
+    "dashboard.clothingSizes": "Clothing Sizes",
+    "dashboard.manageSizesDesc": "Manage your work clothing measurements and sizes",
+    "dashboard.manageSizes": "Manage Sizes",
+    "dashboard.accountSettings": "Account Settings",
+    "dashboard.updateProfile": "Update your profile and preferences",
+
+    "login.form.placeholderemail": "Enter your email",
+    "login.form.placeholderpassword": "Enter your password",
+    
   }
 
   export default en;

@@ -1,4 +1,4 @@
- const pt = {
+const pt = {
     // Header
     "header.title": "Tamanhos de Roupa de Trabalho",
     "header.savedSizes": "Tamanhos Salvos",
@@ -107,6 +107,7 @@
     "saved.saved": "Salvo",
     "saved.edit": "Editar",
     "saved.loading": "Carregando seus tamanhos salvos...",
+    "saved.confirmDelete": "Tem certeza que deseja excluir esta informação de tamanho?",
 
     // Language selector
     "language.select": "Idioma",
@@ -116,7 +117,6 @@
 
     // Login and Sign Up
     "login.form.email": "Email",
-    "login.form.placeholderemail": "Digite seu email",
     "login.form.password": "Senha",
     "login.form.placeholderpassword": "Digite sua senha",
     "login.form.submit": "Entrar",
@@ -124,14 +124,20 @@
     "login.form.forgotPassword": "Esqueceu sua senha?",
     "login.form.error": "Erro ao entrar. Por favor verifique suas credenciais e tente novamente.",
     "login.form.success": "Login bem-sucedido. Redirecionando...",
-    
+    "login.form.emptyFields": "Por favor preencha todos os campos",
+    "login.form.invalidCredentials": "Email ou senha inválidos.",
+    "login.form.serverError": "Ocorreu um erro durante o login. Por favor tente novamente mais tarde.",
+
     "register.form.email": "Email",
+    "register.form.name": "Nome completo",
+    "register.form.placeholdername": "Digite seu nome completo",
     "register.form.placeholderemail": "Digite seu email",
     "register.form.password": "Senha",
     "register.form.placeholderpassword": "Digite sua senha",
     "register.form.confirmPassword": "Confirmar Senha",
     "register.form.placeholderconfirmPassword": "Confirme sua senha",
     "register.form.submit": "Cadastrar",
+    "register.form.creating": "Criando conta...",
     "register.form.success": "Cadastro realizado com sucesso. Redirecionando...",
     "register.form.error": "Erro durante o cadastro. Por favor tente novamente.",
     "register.form.terms": "Eu concordo com os Termos de Serviço e Política de Privacidade",
@@ -161,15 +167,31 @@
     "onboarding.completeprofile.description": "Por favor forneça algumas informações adicionais para completar seu cadastro",
     "onboarding.welcome": "Bem-vindo! Apenas mais alguns detalhes para começar.",
     "onboarding.companyId": "ID da Empresa",
+    "onboarding.companyName": "Nome da Empresa",
     "onboarding.companyIdPlaceholder": "Digite o ID da sua empresa",
     "onboarding.companyIdHelp": "Isso nos ajuda a identificar sua organização e configurar seu espaço de trabalho.",
+    "onboarding.error.invalidCompanyId": "O ID da empresa deve ter entre 3 e 20 caracteres alfanuméricos",
+    "onboarding.error.userNotFound": "Usuário não encontrado. Por favor, cadastre-se ou faça login novamente.",
+    "onboarding.error.serverError": "Ocorreu um erro ao atualizar seu perfil. Por favor tente novamente.",
     "onboarding.gender": "Gênero",
     "onboarding.genderMale": "Masculino",
     "onboarding.genderFemale": "Feminino",
     "onboarding.successMessage": "Perfil completado com sucesso! Redirecionando para o painel...",
     "onboarding.completingSetup": "Concluindo configuração...",
     "onboarding.redirecting": "Redirecionando...",
-    "onboarding.completeSetup": "Concluir Configuração"
+    "onboarding.completeSetup": "Concluir Configuração",
+    
+    // Dashboard
+    "dashboard.welcomeBack": "Bem-vindo de volta",
+    "dashboard.overview": "Aqui está a visão geral personalizada do seu painel.",
+    "dashboard.profileInformation": "Informações de Perfil",
+    "dashboard.accountDetails": "Os detalhes da sua conta e informações da empresa",
+    "dashboard.memberSince": "Membro Desde",
+    "dashboard.clothingSizes": "Tamanhos de Roupa",
+    "dashboard.manageSizesDesc": "Gerencie as medidas e tamanhos da sua roupa de trabalho",
+    "dashboard.manageSizes": "Gerenciar Tamanhos",
+    "dashboard.accountSettings": "Configurações da Conta",
+    "dashboard.updateProfile": "Atualize seu perfil e preferências"
   }
 
 export default pt;

@@ -43,11 +43,56 @@ export function AuthSection() {
 
         if (result.success === false && result.error) {
           alert(result.error)
-        } else if (result.redirect) {
-          window.location.href = result.redirect
         } else if (result.requiresOnboarding) {
+          // Store the partial user data and session token for onboarding
+          if (result.userData) {
+            localStorage.setItem("user_data", JSON.stringify(result.userData));
+          }
+          
+          if (result.sessionToken) {
+            localStorage.setItem("auth_token", result.sessionToken);
+            localStorage.setItem("user_session", "active");
+            
+            // Set cookies for server-side auth
+            try {
+              await fetch('/api/auth/cookie', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ token: result.sessionToken, session: 'active' })
+              });
+            } catch (cookieError) {
+              console.error("Failed to set auth cookies", cookieError);
+            }
+          }
+          
           setUserEmail(googleProfile.email)
           setAuthStep("onboarding")
+        } else if (result.redirect) {
+          // Store the user data and session token before redirecting
+          if (result.userData) {
+            localStorage.setItem("user_data", JSON.stringify(result.userData));
+          }
+          
+          if (result.sessionToken) {
+            localStorage.setItem("auth_token", result.sessionToken);
+            localStorage.setItem("user_session", "active");
+            
+            // Set cookies for server-side auth
+            try {
+              await fetch('/api/auth/cookie', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ token: result.sessionToken, session: 'active' })
+              });
+            } catch (cookieError) {
+              console.error("Failed to set auth cookies", cookieError);
+            }
+          }
+          
+          // Redirect to dashboard with the current language
+          const pathParts = window.location.pathname.split('/');
+          const language = pathParts.length > 1 ? pathParts[1] : 'en';
+          window.location.href = `/${language}/dashboard`;
         }
       } catch (err) {
         alert("Google sign-in failed.")
@@ -63,7 +108,10 @@ export function AuthSection() {
 
   const handleOnboardingComplete = () => {
     setAuthStep("auth")
-    window.location.href = "/dashboard"
+    // Get current language from pathname
+    const pathParts = window.location.pathname.split('/');
+    const language = pathParts.length > 1 ? pathParts[1] : 'en';
+    window.location.href = `/${language}/dashboard`
   }
 
   if (authStep === "onboarding") {

@@ -2,7 +2,7 @@ import { NextResponse } from "next/server"
 import type { NextRequest } from "next/server"
 
 const PUBLIC_LOCALES = ["en", "es", "pt"]
-const DEFAULT_LOCALE = "pt"
+const DEFAULT_LOCALE = "en"
 
 export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl
@@ -12,10 +12,18 @@ export function middleware(request: NextRequest) {
     return NextResponse.next()
   }
 
-  // Detect browser language
+  // Check for language cookie first
+  const cookieLocale = request.cookies.get("NEXT_LOCALE")?.value
+  
+  // Then check browser language if no cookie
   const acceptLang = request.headers.get("accept-language")
   const preferred = acceptLang?.split(",")[0].split("-")[0]
-  const locale = PUBLIC_LOCALES.includes(preferred!) ? preferred : DEFAULT_LOCALE
+  
+  // Use cookie locale if valid, otherwise use browser locale if valid, otherwise use default
+  const locale = 
+    (cookieLocale && PUBLIC_LOCALES.includes(cookieLocale)) ? cookieLocale :
+    (preferred && PUBLIC_LOCALES.includes(preferred)) ? preferred : 
+    DEFAULT_LOCALE
 
   // Redirect to locale route
   return NextResponse.redirect(new URL(`/${locale}${pathname}`, request.url))

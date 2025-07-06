@@ -9,11 +9,11 @@ interface SavedSize {
   savedAt: string
 }
 
-// Mock database - in production, use a real database
-let mockSavedSizes: SavedSize[] = [
+// Initial mock data - will be used only if no sizes are found in localStorage
+const initialMockSavedSizes: SavedSize[] = [
   {
     id: "1",
-    clothingType: "work-shirt",
+    clothingType: "workShirt",
     clothingName: "Work Shirt",
     measurements: {
       chestCircumference: "102",
@@ -25,7 +25,7 @@ let mockSavedSizes: SavedSize[] = [
   },
   {
     id: "2",
-    clothingType: "work-boots",
+    clothingType: "workBoots",
     clothingName: "Work Boots",
     measurements: {
       footLength: "27",
@@ -42,25 +42,53 @@ interface SizeState {
   message?: string
 }
 
-export async function saveMeasurement(prevState: SizeState | null, formData: FormData): Promise<SizeState> {
-  await new Promise((resolve) => setTimeout(resolve, 1000))
+// Helper function to get saved sizes from localStorage
+const getSavedSizesFromStorage = (): SavedSize[] => {
+  if (typeof window === 'undefined') {
+    return initialMockSavedSizes;
+  }
+  
+  const storedSizes = localStorage.getItem('savedSizes');
+  if (!storedSizes) {
+    // Initialize with mock data if nothing is in storage
+    localStorage.setItem('savedSizes', JSON.stringify(initialMockSavedSizes));
+    return initialMockSavedSizes;
+  }
+  
+  try {
+    return JSON.parse(storedSizes);
+  } catch (error) {
+    console.error('Error parsing saved sizes from localStorage:', error);
+    return initialMockSavedSizes;
+  }
+}
 
-  const clothingType = formData.get("clothingType") as string
-  const clothingName = formData.get("clothingName") as string
-  const calculatedSize = formData.get("calculatedSize") as string
+// Helper function to save sizes to localStorage
+const saveSizesToStorage = (sizes: SavedSize[]) => {
+  if (typeof window !== 'undefined') {
+    localStorage.setItem('savedSizes', JSON.stringify(sizes));
+  }
+}
+
+export async function saveMeasurement(prevState: SizeState | null, formData: FormData): Promise<SizeState> {
+  await new Promise((resolve) => setTimeout(resolve, 1000));
+
+  const clothingType = formData.get("clothingType") as string;
+  const clothingName = formData.get("clothingName") as string;
+  const calculatedSize = formData.get("calculatedSize") as string;
 
   if (!clothingType || !clothingName || !calculatedSize) {
     return {
       success: false,
       error: "Missing required information",
-    }
+    };
   }
 
   // Extract measurements from form data
-  const measurements: Record<string, string> = {}
+  const measurements: Record<string, string> = {};
   for (const [key, value] of formData.entries()) {
     if (key !== "clothingType" && key !== "clothingName" && key !== "calculatedSize") {
-      measurements[key] = value as string
+      measurements[key] = value as string;
     }
   }
 
@@ -68,41 +96,50 @@ export async function saveMeasurement(prevState: SizeState | null, formData: For
     return {
       success: false,
       error: "No measurements provided",
-    }
+    };
   }
 
+  // Get current saved sizes
+  const savedSizes = getSavedSizesFromStorage();
+  
   // Check if this clothing type already exists for the user
-  const existingIndex = mockSavedSizes.findIndex((size) => size.clothingType === clothingType)
+  const existingIndex = savedSizes.findIndex((size) => size.clothingType === clothingType);
 
   const newSize: SavedSize = {
-    id: existingIndex >= 0 ? mockSavedSizes[existingIndex].id : Date.now().toString(),
+    id: existingIndex >= 0 ? savedSizes[existingIndex].id : Date.now().toString(),
     clothingType,
     clothingName,
     measurements,
     calculatedSize,
     savedAt: new Date().toISOString(),
-  }
+  };
 
   if (existingIndex >= 0) {
     // Update existing
-    mockSavedSizes[existingIndex] = newSize
+    savedSizes[existingIndex] = newSize;
   } else {
     // Add new
-    mockSavedSizes.push(newSize)
+    savedSizes.push(newSize);
   }
+
+  // Save to localStorage
+  saveSizesToStorage(savedSizes);
 
   return {
     success: true,
     message: `${clothingName} size information saved successfully! Your size is ${calculatedSize}.`,
-  }
+  };
 }
 
 export async function getSavedSizes(): Promise<SavedSize[]> {
-  await new Promise((resolve) => setTimeout(resolve, 500))
-  return [...mockSavedSizes].sort((a, b) => new Date(b.savedAt).getTime() - new Date(a.savedAt).getTime())
+  await new Promise((resolve) => setTimeout(resolve, 500));
+  const savedSizes = getSavedSizesFromStorage();
+  return [...savedSizes].sort((a, b) => new Date(b.savedAt).getTime() - new Date(a.savedAt).getTime());
 }
 
 export async function deleteSavedSize(id: string): Promise<void> {
-  await new Promise((resolve) => setTimeout(resolve, 500))
-  mockSavedSizes = mockSavedSizes.filter((size) => size.id !== id)
+  await new Promise((resolve) => setTimeout(resolve, 500));
+  const savedSizes = getSavedSizesFromStorage();
+  const updatedSizes = savedSizes.filter((size) => size.id !== id);
+  saveSizesToStorage(updatedSizes);
 }

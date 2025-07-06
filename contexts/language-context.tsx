@@ -1,6 +1,6 @@
 "use client";
 
-import { createContext, useContext, type ReactNode } from "react";
+import { createContext, useContext, useEffect, type ReactNode } from "react";
 import { usePathname } from "next/navigation";
 
 import en from "@/app/locales/en";
@@ -28,6 +28,13 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
     const value = translations[language]?.[key];
     return value ?? key;
   };
+
+  // Store language preference in cookie when it changes
+  useEffect(() => {
+    if (language) {
+      document.cookie = `PREFERRED_LOCALE=${language}; path=/; max-age=${60*60*24*30}; SameSite=Lax`;
+    }
+  }, [language]);
 
   return (
     <LanguageContext.Provider value={{ language, t }}>

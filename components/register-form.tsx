@@ -7,41 +7,44 @@ import { Label } from "@/components/ui/label"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { registerUser } from "@/app/actions/auth"
 import { Loader2 } from "lucide-react"
+import { useLanguage } from "@/contexts/language-context"
 
 export function RegisterForm() {
+  const { t, language } = useLanguage();
   const [state, action, isPending] = useActionState(registerUser, null)
 
   return (
     <form action={action} className="space-y-4">
+      <input type="hidden" name="locale" value={language} />
       <div className="space-y-2">
-        <Label htmlFor="name">Full Name</Label>
-        <Input id="name" name="name" type="text" placeholder="Enter your full name" required disabled={isPending} />
+        <Label htmlFor="name">{t("register.form.name")}</Label>
+        <Input id="name" name="name" type="text" placeholder={t("register.form.placeholdername")} required disabled={isPending} />
       </div>
 
       <div className="space-y-2">
-        <Label htmlFor="email">Email</Label>
-        <Input id="email" name="email" type="email" placeholder="Enter your email" required disabled={isPending} />
+        <Label htmlFor="email">{t("register.form.email")}</Label>
+        <Input id="email" name="email" type="email" placeholder={t("register.form.placeholderemail")} required disabled={isPending} />
       </div>
 
       <div className="space-y-2">
-        <Label htmlFor="password">Password</Label>
+        <Label htmlFor="password">{t("register.form.password")}</Label>
         <Input
           id="password"
           name="password"
           type="password"
-          placeholder="Create a password"
+          placeholder={t("register.form.placeholderpassword")}
           required
           disabled={isPending}
         />
       </div>
 
       <div className="space-y-2">
-        <Label htmlFor="confirmPassword">Confirm Password</Label>
+        <Label htmlFor="confirmPassword">{t("register.form.confirmPassword")}</Label>
         <Input
           id="confirmPassword"
           name="confirmPassword"
           type="password"
-          placeholder="Confirm your password"
+          placeholder={t("register.form.placeholderconfirmPassword")}
           required
           disabled={isPending}
         />
@@ -49,7 +52,7 @@ export function RegisterForm() {
 
       {state?.error && (
         <Alert variant="destructive">
-          <AlertDescription>{state.error}</AlertDescription>
+          <AlertDescription>{state.errorLocale ? t(state.error) : state.error}</AlertDescription>
         </Alert>
       )}
 
@@ -63,10 +66,10 @@ export function RegisterForm() {
         {isPending ? (
           <>
             <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-            Creating account...
+            {t("register.form.creating")}
           </>
         ) : (
-          "Create account"
+          t("register.form.submit")
         )}
       </Button>
     </form>

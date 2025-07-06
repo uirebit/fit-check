@@ -22,6 +22,7 @@ model fc_user {
   is_male       Boolean
   company_id    Int?
   user_type     Int?
+  creation_date DateTime?     @default(now()) @db.Timestamp(6)
   fc_company    fc_company?   @relation(fields: [company_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
   fc_user_type  fc_user_type? @relation(fields: [user_type], references: [id], onDelete: NoAction, onUpdate: NoAction)
 }

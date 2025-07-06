@@ -7,44 +7,83 @@ interface AuthState {
   success?: boolean
   error?: string
   message?: string
+  userData?: any
+  sessionToken?: string
+  errorLocale?: boolean // Indica si el error es una clave de traducción
 }
 
 export async function loginUser(prevState: AuthState | null, formData: FormData): Promise<AuthState> {
   const { default: prisma } = await import("@/lib/prisma");  
   const email = formData.get("email") as string
   const password = formData.get("password") as string
+  const locale = formData.get("locale") as string || "en"; // Get the current locale
 
   if (!email || !password) {
     return {
       success: false,
-      error: "Please fill in all fields",
+      error: "login.form.emptyFields",
+      errorLocale: true
     }
   }
 
-  // Find user in database
-  const user = await prisma.fc_user.findUnique({
-    where: { email },
-  })
+  try {
+    // Find user in database
+    const user = await prisma.fc_user.findUnique({
+      where: { email },
+    })
 
-  if (!user) {
+    if (!user) {
+      return {
+        success: false,
+        error: "login.form.invalidCredentials",
+        errorLocale: true
+      }
+    }
+
+    // Compare password hash
+    const isValid = await bcrypt.compare(password, user.password_hash)
+    if (!isValid) {
+      return {
+        success: false,
+        error: "login.form.invalidCredentials",
+        errorLocale: true
+      }
+    }
+
+    // Create userData for client storage
+    const userData = {
+      id: user.id,
+      name: user.username,
+      email: user.email,
+      gender: user.is_male ? "Male" : "Female",
+      companyId: user.company_id?.toString() || "N/A",
+      joinDate: new Date().toISOString().split('T')[0],
+    };
+
+    // Create a session token
+    const sessionToken = generateSessionToken();
+    
+    // Set cookie in response header
+    return {
+      success: true,
+      message: "Login successful! Redirecting to dashboard...",
+      userData: userData,
+      sessionToken: sessionToken
+    };
+  } catch (error) {
+    console.error("Login error:", error);
     return {
       success: false,
-      error: "Invalid email or password.",
-    }
+      error: "login.form.serverError",
+      errorLocale: true
+    };
   }
+}
 
-  // Compare password hash
-  const isValid = await bcrypt.compare(password, user.password_hash)
-  if (!isValid) {
-    return {
-      success: false,
-      error: "Invalid email or password.",
-    }
-  }
-
-  // Optionally, set session/cookie here
-  // For now, redirect to dashboard
-  redirect("/dashboard")
+// Helper function to generate a random token
+function generateSessionToken() {
+  return Math.random().toString(36).substring(2, 15) + 
+         Math.random().toString(36).substring(2, 15);
 }
 
 export async function registerUser(prevState: AuthState | null, formData: FormData): Promise<AuthState> {
@@ -52,26 +91,30 @@ export async function registerUser(prevState: AuthState | null, formData: FormDa
   const email = formData.get("email") as string
   const password = formData.get("password") as string
   const confirmPassword = formData.get("confirmPassword") as string
+  const locale = formData.get("locale") as string || "en"; // Get the current locale
   const { default: prisma } = await import("@/lib/prisma");
 
   if (!name || !email || !password || !confirmPassword) {
     return {
       success: false,
-      error: "Please fill in all fields",
+      error: "login.form.emptyFields",
+      errorLocale: true
     }
   }
 
   if (password !== confirmPassword) {
     return {
       success: false,
-      error: "Passwords do not match",
+      error: "register.form.passwordMismatch",
+      errorLocale: true
     }
   }
 
   if (password.length < 6) {
     return {
       success: false,
-      error: "Password must be at least 6 characters long",
+      error: "register.form.weakPassword",
+      errorLocale: true
     }
   }
 
@@ -79,7 +122,8 @@ export async function registerUser(prevState: AuthState | null, formData: FormDa
   if (!emailRegex.test(email)) {
     return {
       success: false,
-      error: "Please enter a valid email address",
+      error: "register.form.error",
+      errorLocale: true
     }
   }
 
@@ -88,7 +132,8 @@ export async function registerUser(prevState: AuthState | null, formData: FormDa
   if (existingUser) {
     return {
       success: false,
-      error: "A user with this email already exists.",
+      error: "register.form.emailExists",
+      errorLocale: true
     }
   }
 
@@ -116,63 +161,95 @@ export async function completeOnboarding(prevState: AuthState | null, formData: 
   await new Promise((resolve) => setTimeout(resolve, 1000))
 
   const email = formData.get("email") as string
-  const companyDescription = formData.get("companyId") as string
+  const companyId = formData.get("companyId") as string
   const gender = formData.get("gender") as string
+  const locale = formData.get("locale") as string || "en"; // Get the current locale
   const { default: prisma } = await import("@/lib/prisma");
 
   // Basic validation
-  if (!email || !companyDescription || !gender) {
+  if (!email || !companyId || !gender) {
     return {
       success: false,
-      error: "Please fill in all required fields",
+      error: "login.form.emptyFields",
+      errorLocale: true
     }
   }
 
-  // Validate company ID format (example: must be alphanumeric and 3-20 characters)
+  // Validate company ID format
   const companyIdRegex = /^[a-zA-Z0-9]{3,20}$/
-  if (!companyIdRegex.test(companyDescription)) {
+  if (!companyIdRegex.test(companyId)) {
     return {
       success: false,
-      error: "Company ID must be 3-20 alphanumeric characters",
+      error: "onboarding.error.invalidCompanyId",
+      errorLocale: true
     }
   }
 
-  // Validate gender selection
-  if (!["male", "female"].includes(gender.toLowerCase())) {
+  try {
+    // Find the user
+    const user = await prisma.fc_user.findUnique({
+      where: { email }
+    });
+
+    if (!user) {
+      return {
+        success: false,
+        error: "onboarding.error.userNotFound",
+        errorLocale: true
+      };
+    }
+    
+    // Find company name if exists
+    let companyName = "N/A";
+    if (companyId && !isNaN(parseInt(companyId))) {
+      const company = await prisma.fc_company.findUnique({
+        where: { id: parseInt(companyId) }
+      });
+      if (company) {
+        companyName = company.description;
+      }
+    }
+
+    // Parse company_id to a number if needed
+    const companyIdNum = parseInt(companyId) || null;
+
+    // Update user with onboarding data
+    await prisma.fc_user.update({
+      where: { email },
+      data: {
+        company_id: companyIdNum,
+        is_male: gender === 'male'
+        // onboarded field doesn't exist in the schema
+      }
+    });
+
+    // Create userData for client storage
+    const userData = {
+      id: user.id,
+      name: user.username,
+      email: user.email,
+      gender: gender === 'male' ? "Male" : "Female",
+      companyId: companyId,
+      companyName: companyName,
+      joinDate: new Date().toISOString().split('T')[0],
+    };
+
+    // Generate a session token
+    const sessionToken = generateSessionToken();
+
+    return {
+      success: true,
+      message: "Profile completed successfully! Redirecting to dashboard...",
+      userData: userData,
+      sessionToken: sessionToken
+    };
+  } catch (error) {
+    console.error("Onboarding error:", error);
     return {
       success: false,
-      error: "Please select a valid gender option",
-    }
-  }
-
-  // Find company by description (adjust field name as needed)
-const company = await prisma.fc_company.findFirst({
-  where: { description: { equals: companyDescription, mode: "insensitive" } },
-})
-if (!company) {
-  return {
-    success: false,
-    error: "Company not found.",
-  }
-}
-
-  // In a real app, you would:
-  // 1. Update user profile in database with company ID and gender
-  // 2. Set up user workspace based on company ID
-  // 3. Send welcome email
-  // 4. Create user session/JWT token
-  // 5. Log the completion for analytics
-
-  console.log("User onboarding completed:", {
-    email,
-    companyDescription,
-    gender,
-    timestamp: new Date().toISOString(),
-  })
-
-  return {
-    success: true,
-    message: "Profile setup completed successfully!",
+      error: "onboarding.error.serverError",
+      errorLocale: true
+    };
   }
 }
 
@@ -190,7 +267,30 @@ export async function handleGoogleAuth(googleProfile: {
     // Check if user exists by email
     let user = await prisma.fc_user.findUnique({
       where: { email: googleProfile.email },
-    })
+    });
+    
+    // For company information
+    let userWithCompany = user ? await prisma.fc_user.findUnique({
+      where: { email: googleProfile.email },
+      include: {
+        fc_company: true
+      }
+    }) : null;
+
+    // Generate a session token for authentication
+    const sessionToken = generateSessionToken();
+    
+    // Prepare user data for client storage
+    const userData = {
+      id: 0, // Will be updated if user exists
+      name: googleProfile.name,
+      email: googleProfile.email,
+      gender: "Unknown", // Will be updated after onboarding
+      companyId: "N/A",
+      companyName: "N/A", // Will be updated if company exists
+      joinDate: new Date().toISOString().split('T')[0],
+      picture: googleProfile.picture || "",
+    };
 
     if (!user) {
       // Create new user if not found
@@ -203,20 +303,38 @@ export async function handleGoogleAuth(googleProfile: {
           // Add other fields as needed
         },
       })
-      // Optionally, trigger onboarding flow for new users
+      
+      // Update userData with user id
+      userData.id = user.id;
+      
+      // Trigger onboarding flow for new users
       return {
         success: true,
         requiresOnboarding: true,
-        user,
+        userData: userData,
+        sessionToken: sessionToken,
         error: undefined,
       }
     }
 
-    // User exists, proceed to dashboard
+    // User exists, update userData with database values
+    if (user) {
+      userData.id = user.id;
+      userData.gender = user.is_male ? "Male" : "Female";
+      userData.companyId = user.company_id?.toString() || "N/A";
+      
+      // Add company name if available
+      if (userWithCompany?.fc_company) {
+        userData.companyName = userWithCompany.fc_company.description;
+      }
+    }
+    
+    // Return data for authenticated user
     return {
       success: true,
       redirect: "/dashboard",
-      user,
+      userData: userData,
+      sessionToken: sessionToken,
       error: undefined,
     }
   } catch (err: any) {
