@@ -225,34 +225,51 @@ export default function SettingsPage() {
                         <p className="text-xs text-gray-500">{t("settings.profile.emailCannotChange")}</p>
                       </div>
                       
-                      <div className="space-y-2">
-                        <Label>{t("onboarding.gender")}</Label>
-                        <RadioGroup 
-                          value={userData.gender === "Male" ? "male" : "female"} 
-                          onValueChange={(value) => setUserData({...userData, gender: value === "male" ? "Male" : "Female"})}
-                          disabled={isSubmitting}
-                        >
-                          <div className="flex items-center space-x-4">
-                            <div className="flex items-center space-x-2">
-                              <RadioGroupItem value="male" id="male" />
-                              <Label htmlFor="male">{t("onboarding.genderMale")}</Label>
-                            </div>
-                            <div className="flex items-center space-x-2">
-                              <RadioGroupItem value="female" id="female" />
-                              <Label htmlFor="female">{t("onboarding.genderFemale")}</Label>
-                            </div>
-                          </div>
-                        </RadioGroup>
-                      </div>
+                      {/* Mostrar tipo de usuario para superadmin */}
+                      {(userData.isSuperadmin || userData.userType === 1) && (
+                        <div className="space-y-2">
+                          <Label>{t("dashboard.userType")}</Label>
+                          <Input 
+                            value="Superadmin" 
+                            disabled={true}
+                          />
+                        </div>
+                      )}
                       
-                      <div className="space-y-2">
-                        <Label>{t("onboarding.companyName")}</Label>
-                        <Input 
-                          value={userData.companyName || userData.companyId || ""}
-                          disabled={true} // Company cannot be changed by user
-                        />
-                        <p className="text-xs text-gray-500">{t("settings.profile.companyCannotChange")}</p>
-                      </div>
+                      {/* Mostrar género solo si NO es superadmin */}
+                      {!userData.isSuperadmin && userData.userType !== 1 && (
+                        <div className="space-y-2">
+                          <Label>{t("onboarding.gender")}</Label>
+                          <RadioGroup 
+                            value={userData.gender === "Male" ? "male" : "female"} 
+                            onValueChange={(value) => setUserData({...userData, gender: value === "male" ? "Male" : "Female"})}
+                            disabled={isSubmitting}
+                          >
+                            <div className="flex items-center space-x-4">
+                              <div className="flex items-center space-x-2">
+                                <RadioGroupItem value="male" id="male" />
+                                <Label htmlFor="male">{t("onboarding.genderMale")}</Label>
+                              </div>
+                              <div className="flex items-center space-x-2">
+                                <RadioGroupItem value="female" id="female" />
+                                <Label htmlFor="female">{t("onboarding.genderFemale")}</Label>
+                              </div>
+                            </div>
+                          </RadioGroup>
+                        </div>
+                      )}
+                      
+                      {/* Mostrar compañía solo si NO es superadmin */}
+                      {!userData.isSuperadmin && userData.userType !== 1 && (
+                        <div className="space-y-2">
+                          <Label>{t("onboarding.companyName")}</Label>
+                          <Input 
+                            value={userData.companyName || userData.companyId || ""}
+                            disabled={true} // Company cannot be changed by user
+                          />
+                          <p className="text-xs text-gray-500">{t("settings.profile.companyCannotChange")}</p>
+                        </div>
+                      )}
                     </div>
                     
                     <Button type="submit" className="w-full" disabled={isSubmitting}>

@@ -60,11 +60,12 @@ export default function CompanyManagementPage() {
         // Parse user data to check admin role
         const user = JSON.parse(userData);
         
-        // Check if user is admin (user_type = 1 is typically admin)
-        // This should be adjusted based on your actual user type values
-        if (!user || user.userType !== 1) {
+        // Check if user is superadmin (user_type = 1 is superadmin)
+        const isSuperadmin = user.isSuperadmin === true || user.userType === 1;
+        
+        if (!user || !isSuperadmin) {
           setIsAdmin(false);
-          setError("You don't have permission to access this page");
+          setError(t("admin.unauthorizedSuperadmin") || "Only superadmins can access this page");
           setTimeout(() => {
             router.push(`/${language}/dashboard`);
           }, 2000);

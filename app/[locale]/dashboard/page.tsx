@@ -321,16 +321,35 @@ export default function DashboardPage() {
                       <p className="text-sm font-medium text-gray-500">{t("login.form.email")}</p>
                       <p className="text-gray-900">{userData.email}</p>
                     </div>
-                    <div className="space-y-2">
-                      <p className="text-sm font-medium text-gray-500">{t("onboarding.companyName")}</p>
-                      <div className="flex items-center space-x-2">
-                        <Badge variant="secondary">{userData.companyName || userData.companyId}</Badge>
+                    
+                    {/* Mostrar compañía solo si NO es superadmin */}
+                    {!userData.isSuperadmin && userData.userType !== 1 && (
+                      <div className="space-y-2">
+                        <p className="text-sm font-medium text-gray-500">{t("onboarding.companyName")}</p>
+                        <div className="flex items-center space-x-2">
+                          <Badge variant="secondary">{userData.companyName || userData.companyId}</Badge>
+                        </div>
                       </div>
-                    </div>
-                    <div className="space-y-2">
-                      <p className="text-sm font-medium text-gray-500">{t("onboarding.gender")}</p>
-                      <p className="text-gray-900">{userData.gender}</p>
-                    </div>
+                    )}
+                    
+                    {/* Mostrar tipo de usuario para superadmin */}
+                    {(userData.isSuperadmin || userData.userType === 1) && (
+                      <div className="space-y-2">
+                        <p className="text-sm font-medium text-gray-500">{t("dashboard.userType")}</p>
+                        <div className="flex items-center space-x-2">
+                          <Badge variant="default" className="bg-blue-500">Superadmin</Badge>
+                        </div>
+                      </div>
+                    )}
+                    
+                    {/* Mostrar género solo si NO es superadmin */}
+                    {!userData.isSuperadmin && userData.userType !== 1 && (
+                      <div className="space-y-2">
+                        <p className="text-sm font-medium text-gray-500">{t("onboarding.gender")}</p>
+                        <p className="text-gray-900">{userData.gender}</p>
+                      </div>
+                    )}
+                    
                     <div className="space-y-2">
                       <p className="text-sm font-medium text-gray-500">{t("dashboard.memberSince")}</p>
                       <p className="text-gray-900">{new Date(userData.joinDate).toLocaleDateString()}</p>
@@ -340,21 +359,24 @@ export default function DashboardPage() {
               </Card>
             </div>
 
-            <div className="grid md:grid-cols-2 gap-6">
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center">
-                    <Ruler className="h-5 w-5 mr-2 text-blue-600" />
-                    {t("dashboard.clothingSizes")}
-                  </CardTitle>
-                  <CardDescription>{t("dashboard.manageSizesDesc")}</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <Link href={`/${userData.language}/sizes`}>
-                    <Button className="w-full">{t("dashboard.manageSizes")}</Button>
-                  </Link>
-                </CardContent>
-              </Card>
+            <div className={`grid ${(!userData.isSuperadmin && userData.userType !== 1) ? 'md:grid-cols-2' : 'md:grid-cols-1'} gap-6`}>
+              {/* Mostrar tarjeta de tallas solo si NO es superadmin */}
+              {!userData.isSuperadmin && userData.userType !== 1 && (
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="flex items-center">
+                      <Ruler className="h-5 w-5 mr-2 text-blue-600" />
+                      {t("dashboard.clothingSizes")}
+                    </CardTitle>
+                    <CardDescription>{t("dashboard.manageSizesDesc")}</CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <Link href={`/${userData.language}/sizes`}>
+                      <Button className="w-full">{t("dashboard.manageSizes")}</Button>
+                    </Link>
+                  </CardContent>
+                </Card>
+              )}
 
               <Card>
                 <CardHeader>
@@ -366,14 +388,22 @@ export default function DashboardPage() {
                 </CardHeader>
                 <CardContent>
                   <div className="space-y-4">
-                    {/* Superadmin button for managing companies (only shown to superadmins - userType 1) */}
+                    {/* Superadmin buttons (only shown to superadmins - userType 1) */}
                     {(userData.isSuperadmin === true || userData.userType === 1) && (
-                      <Button 
-                        className="w-full" 
-                        onClick={() => router.push(`/${userData.language || language}/admin/company-management`)}
-                      >
-                        {t("admin.companies.manage")}
-                      </Button>
+                      <>
+                        <Button 
+                          className="w-full mb-2" 
+                          onClick={() => router.push(`/${userData.language || language}/admin/company-management`)}
+                        >
+                          {t("admin.companies.manage")}
+                        </Button>
+                        <Button 
+                          className="w-full" 
+                          onClick={() => router.push(`/${userData.language || language}/admin/user-management`)}
+                        >
+                          {t("admin.users.manage")}
+                        </Button>
+                      </>
                     )}
                     
                     {/* Other admin options can be added here for both admin types */}
