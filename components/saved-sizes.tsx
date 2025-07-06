@@ -29,7 +29,22 @@ export function SavedSizes() {
 
   const loadSavedSizes = async () => {
     try {
-      const sizes = await getSavedSizes()
+      // Get user email from localStorage if available
+      let userEmail = "";
+      
+      if (typeof window !== 'undefined') {
+        try {
+          const storedUser = localStorage.getItem('user_data');
+          if (storedUser) {
+            const userData = JSON.parse(storedUser);
+            userEmail = userData.email || '';
+          }
+        } catch (e) {
+          console.error("Error getting user email from localStorage:", e);
+        }
+      }
+      
+      const sizes = await getSavedSizes(userEmail)
       setSavedSizes(sizes)
     } catch (error) {
       console.error("Failed to load saved sizes:", error)

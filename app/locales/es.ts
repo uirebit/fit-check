@@ -86,6 +86,8 @@ const es = {
     "measurement.tip2": "• Mide sobre la ropa interior apropiada",
     "measurement.tip3": "• Mantén la cinta ajustada pero no apretada",
     "measurement.tip4": "• Pide ayuda a alguien para mayor precisión",
+    "measurement.savedDataLoaded": "Medidas guardadas cargadas",
+    "measurement.savedDataLoadedDesc": "Tus medidas guardadas previamente han sido cargadas. Puedes actualizarlas si lo necesitas.",
 
     // Input form
     "input.enterMeasurements": "Introduce tus Medidas",
@@ -94,35 +96,56 @@ const es = {
     "input.basedOnMeasurements": "Basado en tus medidas",
     "input.saving": "Guardando...",
     "input.save": "Guardar Información de Talla",
+    "input.centimeters": "cm",
 
     // Measurements
-    "measure.headCircumference": "Circunferencia de la Cabeza",
-    "measure.headCircumferenceDesc": "Mide alrededor de la parte más ancha de tu cabeza",
-    "measure.headCircumferencePlaceholder": "Introduce circunferencia de la cabeza",
-    "measure.chestCircumference": "Circunferencia del Pecho",
-    "measure.chestCircumferenceDesc": "Mide alrededor de la parte más amplia de tu pecho",
-    "measure.chestCircumferencePlaceholder": "Introduce medida del pecho",
-    "measure.neckCircumference": "Circunferencia del Cuello",
-    "measure.neckCircumferenceDesc": "Mide alrededor de la base de tu cuello",
-    "measure.neckCircumferencePlaceholder": "Introduce medida del cuello",
-    "measure.sleeveLength": "Longitud de Manga",
-    "measure.sleeveLengthDesc": "Desde el punto del hombro hasta la muñeca",
-    "measure.sleeveLengthPlaceholder": "Introduce longitud de manga",
-    "measure.waistCircumference": "Circunferencia de la Cintura",
-    "measure.waistCircumferenceDesc": "Mide alrededor de tu cintura natural",
-    "measure.waistCircumferencePlaceholder": "Introduce medida de cintura",
-    "measure.hipCircumference": "Circunferencia de Cadera",
-    "measure.hipCircumferenceDesc": "Mide alrededor de la parte más amplia de tus caderas",
-    "measure.hipCircumferencePlaceholder": "Introduce medida de cadera",
-    "measure.inseamLength": "Longitud de Entrepierna",
-    "measure.inseamLengthDesc": "Desde la entrepierna hasta el hueso del tobillo",
-    "measure.inseamLengthPlaceholder": "Introduce longitud de entrepierna",
-    "measure.footLength": "Longitud del Pie",
-    "measure.footLengthDesc": "Desde el talón hasta el dedo más largo",
-    "measure.footLengthPlaceholder": "Introduce longitud del pie",
-    "measure.footWidth": "Ancho del Pie",
-    "measure.footWidthDesc": "En la parte más ancha de tu pie",
-    "measure.footWidthPlaceholder": "Introduce ancho del pie",
+    // General body measurements
+    
+    "measure.head_circumference": "Circunferencia de la Cabeza",
+    "measure.head_circumferenceDesc": "Mide alrededor de la parte más ancha de tu cabeza",
+    "measure.head_circumferencePlaceholder": "Introduce circunferencia de la cabeza",
+    "measure.head_height": "Altura de la Cabeza",
+    "measure.head_heightDesc": "Mide desde la parte superior de la cabeza hasta la base del cuello",
+    "measure.head_heightPlaceholder": "Introduce altura de la cabeza",
+    "measure.head_width": "Ancho de la Cabeza",
+    "measure.head_widthDesc": "Mide el ancho más amplio de tu cabeza (de oreja a oreja)",
+    "measure.head_widthPlaceholder": "Introduce ancho de la cabeza",
+    "measure.face_height": "Altura de la Cara",
+    "measure.face_heightDesc": "Mide desde la línea del cabello hasta la barbilla",
+    "measure.face_heightPlaceholder": "Introduce altura de la cara",
+    "measure.face_length": "Longitud de la Cara",
+    "measure.face_lengthDesc": "Mide desde la línea del cabello hasta la barbilla",
+    "measure.face_lengthPlaceholder": "Introduce longitud de la cara", 
+    "measure.chest_circumference": "Circunferencia del Pecho",
+    "measure.chest_circumferenceDesc": "Mide alrededor de la parte más amplia de tu pecho",
+    "measure.chest_circumferencePlaceholder": "Introduce medida del pecho",  
+    "measure.sleeve_length": "Longitud de Manga",
+    "measure.sleeve_lengthDesc": "Desde el punto del hombro hasta la muñeca",
+    "measure.sleeve_lengthPlaceholder": "Introduce longitud de manga",   
+    "measure.waist_circumference": "Circunferencia de la Cintura",
+    "measure.waist_circumferenceDesc": "Mide alrededor de tu cintura natural",
+    "measure.waist_circumferencePlaceholder": "Introduce medida de cintura",
+    "measure.wrist_circumference": "Circunferencia de la Muñeca",
+    "measure.wrist_circumferenceDesc": "Mide alrededor de la muñeca",
+    "measure.wrist_circumferencePlaceholder": "Introduce circunferencia de la muñeca",
+    "measure.knee_circumference": "Circunferencia de la Rodilla",
+    "measure.knee_circumferenceDesc": "Mide alrededor de la rodilla",
+    "measure.knee_circumferencePlaceholder": "Introduce circunferencia de la rodilla",   
+    "measure.inseam_length": "Longitud de Entrepierna",
+    "measure.inseam_lengthDesc": "Desde la entrepierna hasta el hueso del tobillo",
+    "measure.inseam_lengthPlaceholder": "Introduce longitud de entrepierna",   
+    "measure.foot_length": "Longitud del Pie",
+    "measure.foot_lengthDesc": "Desde el talón hasta el dedo más largo",
+    "measure.foot_lengthPlaceholder": "Introduce longitud del pie",  
+    "measure.foot_width": "Ancho del Pie",
+    "measure.foot_widthDesc": "En la parte más ancha de tu pie",
+    "measure.foot_widthPlaceholder": "Introduce ancho del pie",
+    "measure.hand_length": "Longitud de la Mano",
+    "measure.hand_lengthDesc": "Mide desde la muñeca hasta la punta del dedo medio",
+    "measure.hand_lengthPlaceholder": "Introduce longitud de la mano",
+    "measure.length": "Longitud",
+    "measure.lengthDesc": "Medición de longitud general",
+    "measure.lengthPlaceholder": "Introduce longitud",
 
     // Saved sizes
     "saved.title": "Tus Tallas Guardadas",
@@ -191,7 +214,7 @@ const es = {
     "signin.enterInformation": "Ingresa tu información para crear una nueva cuenta",
     "signin.signInWithGoogle": "Continuar con Google",
     "signin.signUpWithGoogle": "Registrarse con Google",
-    "signin.signingInWithGoogle": "Iniciando sesión con Google...",
+    "signin.signingInWithGoogle": "Iniciando sesión con Google..."  ,
     "signin.orSignInWithEmail": "O inicia sesión con correo electrónico",
     "signin.orContinueWithEmail": "O continúa con correo electrónico",
     "signin.dontHaveAccount": "¿No tienes una cuenta? Regístrate",
@@ -322,6 +345,9 @@ const es = {
     "category.lab_wear": "Ropa de Laboratorio",
     "category.other": "Otros",
     
+    // Mensajes de éxito
+    "success.sizeSaved": "¡Información de talla guardada correctamente!",
+    
     // Error messages in sizes page
     "error.title": "Error",
     "error.noItemsFound": "No se encontraron elementos",
@@ -329,9 +355,59 @@ const es = {
     "error.notAuthenticated": "Usuario no autenticado. Por favor, inicia sesión nuevamente.",
     "error.loadingFailed": "Error al cargar las prendas de ropa. Por favor, inténtalo de nuevo.",
     "error.noClothingFound": "No se encontraron prendas de ropa para tu empresa",
+    "error.Missing required information": "Falta información requerida",
+    "error.No measurements provided": "No se proporcionaron medidas",
+    "error.noMeasurementFields": "No se encontraron campos de medición para este tipo de ropa",
+    "error.An unexpected error occurred": "Ocurrió un error inesperado. Por favor, inténtalo de nuevo más tarde.",
     
     // Loading states
-    "loading.clothingTypes": "Cargando tipos de ropa..."
+    "loading.clothingTypes": "Cargando tipos de ropa...",
+    "loading.measurements": "Cargando campos de medición...",
+    "loading.savedMeasurements": "Cargando tus medidas guardadas...",
+    
+    // Instrucciones de medición por tipo de ropa
+    "measure.instruction.work-hat.1": "Envuelve una cinta métrica flexible alrededor de tu cabeza, aproximadamente 2,5 cm por encima de tus cejas",
+    "measure.instruction.work-hat.2": "Mantén la cinta nivelada y ajustada pero no apretada",
+    "measure.instruction.work-hat.3": "Registra la medida donde se une la cinta",
+    
+    "measure.instruction.safety-helmet.1": "Mide alrededor de tu cabeza en el punto más ancho",
+    "measure.instruction.safety-helmet.2": "Posiciona la cinta aproximadamente 2,5 cm por encima de tus cejas",
+    "measure.instruction.safety-helmet.3": "Asegúrate de que la cinta esté nivelada alrededor de tu cabeza",
+    
+    "measure.instruction.work-shirt.1": "Mide el pecho en la parte más completa, bajo los brazos",
+    "measure.instruction.work-shirt.2": "Mide la circunferencia del cuello en la base",
+    "measure.instruction.work-shirt.3": "Mide la longitud de la manga desde el hombro hasta la muñeca",
+    "measure.instruction.work-shirt.4": "Mantén la cinta ajustada pero no apretada",
+    
+    "measure.instruction.polo-shirt.1": "Mide el pecho en la parte más completa, bajo los brazos",
+    "measure.instruction.polo-shirt.2": "Mide la circunferencia del cuello en la base",
+    "measure.instruction.polo-shirt.3": "Mide la longitud de la manga desde el hombro hasta la muñeca",
+    "measure.instruction.polo-shirt.4": "Mantén la cinta ajustada pero no apretada",
+    
+    "measure.instruction.work-pants.1": "Mide la cintura en el punto más estrecho",
+    "measure.instruction.work-pants.2": "Mide las caderas en la parte más completa",
+    "measure.instruction.work-pants.3": "Mide la entrepierna desde la ingle hasta el tobillo",
+    "measure.instruction.work-pants.4": "Mantente derecho con los pies ligeramente separados",
+    
+    "measure.instruction.work-shorts.1": "Mide la cintura en el punto más estrecho",
+    "measure.instruction.work-shorts.2": "Mide las caderas en la parte más completa",
+    "measure.instruction.work-shorts.3": "Mide la longitud deseada del pantalón corto desde la cintura",
+    "measure.instruction.work-shorts.4": "Mantente derecho con los pies ligeramente separados",
+    
+    "measure.instruction.work-boots.1": "Mide la longitud del pie desde el talón hasta el dedo más largo",
+    "measure.instruction.work-boots.2": "Mide el ancho del pie en el punto más ancho",
+    "measure.instruction.work-boots.3": "Mide mientras estás de pie con el peso sobre ambos pies",
+    "measure.instruction.work-boots.4": "Mide ambos pies y usa la medida más grande",
+    
+    "measure.instruction.safety-shoes.1": "Mide la longitud del pie desde el talón hasta el dedo más largo",
+    "measure.instruction.safety-shoes.2": "Mide el ancho del pie en el punto más ancho",
+    "measure.instruction.safety-shoes.3": "Mide mientras estás de pie con el peso sobre ambos pies",
+    "measure.instruction.safety-shoes.4": "Mide ambos pies y usa la medida más grande",
+    
+    "measure.instruction.default.1": "Sigue las pautas generales de medición",
+    "measure.instruction.default.2": "Usa una cinta métrica flexible",
+    "measure.instruction.default.3": "Mantén las medidas ajustadas pero no apretadas",
+    "measure.instruction.default.4": "Pide ayuda si la necesitas"    
   }
 
   export default es;

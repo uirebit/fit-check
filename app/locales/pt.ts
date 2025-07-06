@@ -85,6 +85,8 @@ const pt = {
     "measurement.tip2": "• Meça sobre roupas íntimas apropriadas",
     "measurement.tip3": "• Mantenha a fita justa mas não apertada",
     "measurement.tip4": "• Peça ajuda a alguém para maior precisão",
+    "measurement.savedDataLoaded": "Medidas salvas carregadas",
+    "measurement.savedDataLoadedDesc": "Suas medidas previamente salvas foram carregadas. Você pode atualizá-las se necessário.",
 
     // Input form
     "input.enterMeasurements": "Digite suas Medidas",
@@ -93,35 +95,55 @@ const pt = {
     "input.basedOnMeasurements": "Baseado nas suas medidas",
     "input.saving": "Salvando...",
     "input.save": "Salvar Informações do Tamanho",
+    "input.centimeters": "cm",
 
     // Measurements
-    "measure.headCircumference": "Circunferência da Cabeça",
-    "measure.headCircumferenceDesc": "Meça ao redor da parte mais larga da sua cabeça",
-    "measure.headCircumferencePlaceholder": "Digite circunferência da cabeça",
-    "measure.chestCircumference": "Circunferência do Peito",
-    "measure.chestCircumferenceDesc": "Meça ao redor da parte mais ampla do seu peito",
-    "measure.chestCircumferencePlaceholder": "Digite medida do peito",
-    "measure.neckCircumference": "Circunferência do Pescoço",
-    "measure.neckCircumferenceDesc": "Meça ao redor da base do seu pescoço",
-    "measure.neckCircumferencePlaceholder": "Digite medida do pescoço",
-    "measure.sleeveLength": "Comprimento da Manga",
-    "measure.sleeveLengthDesc": "Do ponto do ombro até o pulso",
-    "measure.sleeveLengthPlaceholder": "Digite comprimento da manga",
-    "measure.waistCircumference": "Circunferência da Cintura",
-    "measure.waistCircumferenceDesc": "Meça ao redor da sua cintura natural",
-    "measure.waistCircumferencePlaceholder": "Digite medida da cintura",
-    "measure.hipCircumference": "Circunferência do Quadril",
-    "measure.hipCircumferenceDesc": "Meça ao redor da parte mais ampla dos seus quadris",
-    "measure.hipCircumferencePlaceholder": "Digite medida do quadril",
-    "measure.inseamLength": "Comprimento da Entrepierna",
-    "measure.inseamLengthDesc": "Da entrepierna até o osso do tornozelo",
-    "measure.inseamLengthPlaceholder": "Digite comprimento da entrepierna",
-    "measure.footLength": "Comprimento do Pé",
-    "measure.footLengthDesc": "Do calcanhar até o dedo mais longo",
-    "measure.footLengthPlaceholder": "Digite comprimento do pé",
-    "measure.footWidth": "Largura do Pé",
-    "measure.footWidthDesc": "Na parte mais larga do seu pé",
-    "measure.footWidthPlaceholder": "Digite largura do pé",
+    // General body measurements    
+    "measure.head_circumference": "Circunferência da Cabeça",
+    "measure.head_circumferenceDesc": "Meça ao redor da parte mais larga da sua cabeça",
+    "measure.head_circumferencePlaceholder": "Digite circunferência da cabeça",
+    "measure.head_height": "Altura da Cabeça",
+    "measure.head_heightDesc": "Meça do topo da cabeça até a base do pescoço",
+    "measure.head_heightPlaceholder": "Digite altura da cabeça",
+    "measure.head_width": "Largura da Cabeça",
+    "measure.head_widthDesc": "Meça a parte mais larga da sua cabeça (de orelha a orelha)",
+    "measure.head_widthPlaceholder": "Digite largura da cabeça",
+    "measure.face_height": "Altura do Rosto",
+    "measure.face_heightDesc": "Meça da linha do cabelo até o queixo",
+    "measure.face_heightPlaceholder": "Digite altura do rosto",
+    "measure.face_length": "Comprimento do Rosto",
+    "measure.face_lengthDesc": "Meça da linha do cabelo até o queixo",
+    "measure.face_lengthPlaceholder": "Digite comprimento do rosto",  
+    "measure.chest_circumference": "Circunferência do Peito",
+    "measure.chest_circumferenceDesc": "Meça ao redor da parte mais ampla do seu peito",
+    "measure.chest_circumferencePlaceholder": "Digite medida do peito",    
+    "measure.sleeve_length": "Comprimento da Manga",
+    "measure.sleeve_lengthDesc": "Do ponto do ombro até o pulso",
+    "measure.sleeve_lengthPlaceholder": "Digite comprimento da manga",
+    "measure.waist_circumference": "Circunferência da Cintura",
+    "measure.waist_circumferenceDesc": "Meça ao redor da sua cintura natural",
+    "measure.waist_circumferencePlaceholder": "Digite medida da cintura",
+    "measure.wrist_circumference": "Circunferência do Pulso",
+    "measure.wrist_circumferenceDesc": "Meça ao redor do seu pulso",
+    "measure.wrist_circumferencePlaceholder": "Digite medida do pulso",
+    "measure.knee_circumference": "Circunferência do Joelho",
+    "measure.knee_circumferenceDesc": "Meça ao redor do seu joelho",
+    "measure.knee_circumferencePlaceholder": "Digite medida do joelho",
+    "measure.inseam_length": "Comprimento da Entrepierna",
+    "measure.inseam_lengthDesc": "Da entrepierna até o osso do tornozelo",
+    "measure.inseam_lengthPlaceholder": "Digite comprimento da entrepierna",
+    "measure.foot_length": "Comprimento do Pé",
+    "measure.foot_lengthDesc": "Do calcanhar até o dedo mais longo",
+    "measure.foot_lengthPlaceholder": "Digite comprimento do pé",
+    "measure.foot_width": "Largura do Pé",
+    "measure.foot_widthDesc": "Na parte mais larga do seu pé",
+    "measure.foot_widthPlaceholder": "Digite largura do pé",
+    "measure.hand_length": "Comprimento da Mão",
+    "measure.hand_lengthDesc": "Meça do pulso até a ponta do dedo médio",
+    "measure.hand_lengthPlaceholder": "Digite comprimento da mão",
+    "measure.length": "Comprimento",
+    "measure.lengthDesc": "Medição geral de comprimento",
+    "measure.lengthPlaceholder": "Digite o comprimento",
 
     // Saved sizes
     "saved.title": "Seus Tamanhos Salvos",
@@ -320,6 +342,9 @@ const pt = {
     "category.lab_wear": "Vestuário de Laboratório",
     "category.other": "Outros",
     
+    // Mensagens de sucesso
+    "success.sizeSaved": "Informações de tamanho salvas com sucesso!",
+    
     // Error messages in sizes page
     "error.title": "Erro",
     "error.noItemsFound": "Nenhum item encontrado",
@@ -327,9 +352,59 @@ const pt = {
     "error.notAuthenticated": "Usuário não autenticado. Por favor, faça login novamente.",
     "error.loadingFailed": "Falha ao carregar itens de vestuário. Por favor, tente novamente.",
     "error.noClothingFound": "Nenhum item de vestuário encontrado para sua empresa",
+    "error.Missing required information": "Informações obrigatórias ausentes",
+    "error.No measurements provided": "Nenhuma medida fornecida",
+    "error.noMeasurementFields": "Nenhum campo de medição encontrado para este tipo de vestuário",
+    "error.An unexpected error occurred": "Ocorreu um erro inesperado. Por favor, tente novamente mais tarde.",
     
     // Loading states
-    "loading.clothingTypes": "Carregando tipos de vestuário..."
+    "loading.clothingTypes": "Carregando tipos de vestuário...",
+    "loading.measurements": "Carregando campos de medição...",
+    "loading.savedMeasurements": "Carregando suas medidas salvas...",
+    
+    // Instruções de medição por tipo de roupa
+    "measure.instruction.work-hat.1": "Envolva uma fita métrica flexível ao redor da sua cabeça, cerca de 2,5 cm acima das sobrancelhas",
+    "measure.instruction.work-hat.2": "Mantenha a fita nivelada e ajustada, mas não apertada",
+    "measure.instruction.work-hat.3": "Anote a medida onde a fita se encontra",
+    
+    "measure.instruction.safety-helmet.1": "Meça ao redor da sua cabeça no ponto mais largo",
+    "measure.instruction.safety-helmet.2": "Posicione a fita cerca de 2,5 cm acima das sobrancelhas",
+    "measure.instruction.safety-helmet.3": "Certifique-se de que a fita esteja nivelada em toda a volta da cabeça",
+    
+    "measure.instruction.work-shirt.1": "Meça o peito na parte mais cheia, abaixo dos braços",
+    "measure.instruction.work-shirt.2": "Meça a circunferência do pescoço na base",
+    "measure.instruction.work-shirt.3": "Meça o comprimento da manga do ombro ao pulso",
+    "measure.instruction.work-shirt.4": "Mantenha a fita ajustada, mas não apertada",
+    
+    "measure.instruction.polo-shirt.1": "Meça o peito na parte mais cheia, abaixo dos braços",
+    "measure.instruction.polo-shirt.2": "Meça a circunferência do pescoço na base",
+    "measure.instruction.polo-shirt.3": "Meça o comprimento da manga do ombro ao pulso",
+    "measure.instruction.polo-shirt.4": "Mantenha a fita ajustada, mas não apertada",
+    
+    "measure.instruction.work-pants.1": "Meça a cintura no ponto mais estreito",
+    "measure.instruction.work-pants.2": "Meça os quadris na parte mais cheia",
+    "measure.instruction.work-pants.3": "Meça a entreperna da virilha até o tornozelo",
+    "measure.instruction.work-pants.4": "Fique em pé com os pés ligeiramente afastados",
+    
+    "measure.instruction.work-shorts.1": "Meça a cintura no ponto mais estreito",
+    "measure.instruction.work-shorts.2": "Meça os quadris na parte mais cheia",
+    "measure.instruction.work-shorts.3": "Meça o comprimento desejado do shorts a partir da cintura",
+    "measure.instruction.work-shorts.4": "Fique em pé com os pés ligeiramente afastados",
+    
+    "measure.instruction.work-boots.1": "Meça o comprimento do pé do calcanhar até o dedo mais longo",
+    "measure.instruction.work-boots.2": "Meça a largura do pé no ponto mais largo",
+    "measure.instruction.work-boots.3": "Meça enquanto estiver de pé com o peso sobre ambos os pés",
+    "measure.instruction.work-boots.4": "Meça ambos os pés e use a medição maior",
+    
+    "measure.instruction.safety-shoes.1": "Meça o comprimento do pé do calcanhar até o dedo mais longo",
+    "measure.instruction.safety-shoes.2": "Meça a largura do pé no ponto mais largo",
+    "measure.instruction.safety-shoes.3": "Meça enquanto estiver de pé com o peso sobre ambos os pés",
+    "measure.instruction.safety-shoes.4": "Meça ambos os pés e use a medição maior",
+    
+    "measure.instruction.default.1": "Siga as diretrizes gerais de medição",
+    "measure.instruction.default.2": "Use uma fita métrica flexível",
+    "measure.instruction.default.3": "Mantenha as medidas ajustadas, mas não apertadas",
+    "measure.instruction.default.4": "Peça ajuda se necessário"
   }
 
 export default pt;

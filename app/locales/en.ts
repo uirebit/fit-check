@@ -88,6 +88,8 @@ const en = {
     "measurement.tip2": "• Measure over appropriate undergarments",
     "measurement.tip3": "• Keep the tape snug but not tight",
     "measurement.tip4": "• Ask someone to help for better accuracy",
+    "measurement.savedDataLoaded": "Saved measurements loaded",
+    "measurement.savedDataLoadedDesc": "Your previously saved measurements have been loaded. You can update them if needed.",
 
     // Input form
     "input.enterMeasurements": "Enter Your Measurements",
@@ -96,35 +98,55 @@ const en = {
     "input.basedOnMeasurements": "Based on your measurements",
     "input.saving": "Saving...",
     "input.save": "Save Size Information",
+    "input.centimeters": "cm",
 
     // Measurements
-    "measure.headCircumference": "Head Circumference",
-    "measure.headCircumferenceDesc": "Measure around the widest part of your head",
-    "measure.headCircumferencePlaceholder": "Enter head circumference",
-    "measure.chestCircumference": "Chest Circumference",
-    "measure.chestCircumferenceDesc": "Measure around the fullest part of your chest",
-    "measure.chestCircumferencePlaceholder": "Enter chest measurement",
-    "measure.neckCircumference": "Neck Circumference",
-    "measure.neckCircumferenceDesc": "Measure around the base of your neck",
-    "measure.neckCircumferencePlaceholder": "Enter neck measurement",
-    "measure.sleeveLength": "Sleeve Length",
-    "measure.sleeveLengthDesc": "From shoulder point to wrist",
-    "measure.sleeveLengthPlaceholder": "Enter sleeve length",
-    "measure.waistCircumference": "Waist Circumference",
-    "measure.waistCircumferenceDesc": "Measure around your natural waistline",
-    "measure.waistCircumferencePlaceholder": "Enter waist measurement",
-    "measure.hipCircumference": "Hip Circumference",
-    "measure.hipCircumferenceDesc": "Measure around the fullest part of your hips",
-    "measure.hipCircumferencePlaceholder": "Enter hip measurement",
-    "measure.inseamLength": "Inseam Length",
-    "measure.inseamLengthDesc": "From crotch to ankle bone",
-    "measure.inseamLengthPlaceholder": "Enter inseam length",
-    "measure.footLength": "Foot Length",
-    "measure.footLengthDesc": "From heel to longest toe",
-    "measure.footLengthPlaceholder": "Enter foot length",
-    "measure.footWidth": "Foot Width",
-    "measure.footWidthDesc": "At the widest part of your foot",
-    "measure.footWidthPlaceholder": "Enter foot width",
+    // General body measurements    
+    "measure.head_circumference": "Head Circumference",
+    "measure.head_circumferenceDesc": "Measure around the widest part of your head",
+    "measure.head_circumferencePlaceholder": "Enter head circumference",
+    "measure.head_height": "Head Height",
+    "measure.head_heightDesc": "Measure from the top of your head to the base of your neck",
+    "measure.head_heightPlaceholder": "Enter head height",
+    "measure.head_width": "Head Width",
+    "measure.head_widthDesc": "Measure the widest part of your head (ear to ear)",
+    "measure.head_widthPlaceholder": "Enter head width",
+    "measure.face_height": "Face Height",
+    "measure.face_heightDesc": "Measure from hairline to chin",
+    "measure.face_heightPlaceholder": "Enter face height",
+    "measure.face_length": "Face Length",
+    "measure.face_lengthDesc": "Measure from hairline to chin",
+    "measure.face_lengthPlaceholder": "Enter face length",
+    "measure.chest_circumference": "Chest Circumference",
+    "measure.chest_circumferenceDesc": "Measure around the fullest part of your chest",
+    "measure.chest_circumferencePlaceholder": "Enter chest measurement",
+    "measure.sleeve_length": "Sleeve Length",
+    "measure.sleeve_lengthDesc": "From shoulder point to wrist",
+    "measure.sleeve_lengthPlaceholder": "Enter sleeve length",
+    "measure.waist_circumference": "Waist Circumference",
+    "measure.waist_circumferenceDesc": "Measure around your natural waistline",
+    "measure.waist_circumferencePlaceholder": "Enter waist measurement",
+    "measure.wrist_circumference": "Wrist Circumference",
+    "measure.wrist_circumferenceDesc": "Measure around your wrist",
+    "measure.wrist_circumferencePlaceholder": "Enter wrist measurement",
+    "measure.knee_circumference": "Knee Circumference",
+    "measure.knee_circumferenceDesc": "Measure around your knee",
+    "measure.knee_circumferencePlaceholder": "Enter knee measurement",
+    "measure.inseam_length": "Inseam Length",
+    "measure.inseam_lengthDesc": "From crotch to ankle bone",
+    "measure.inseam_lengthPlaceholder": "Enter inseam length",
+    "measure.foot_length": "Foot Length",
+    "measure.foot_lengthDesc": "From heel to longest toe",
+    "measure.foot_lengthPlaceholder": "Enter foot length",
+    "measure.foot_width": "Foot Width",
+    "measure.foot_widthDesc": "At the widest part of your foot",
+    "measure.foot_widthPlaceholder": "Enter foot width",
+    "measure.hand_length": "Hand Length",
+    "measure.hand_lengthDesc": "Measure from wrist to the tip of your middle finger",
+    "measure.hand_lengthPlaceholder": "Enter hand length",
+    "measure.length": "Length",
+    "measure.lengthDesc": "General length measurement",
+    "measure.lengthPlaceholder": "Enter length",
 
     // Saved sizes
     "saved.title": "Your Saved Sizes",
@@ -315,6 +337,9 @@ const en = {
     "category.welding": "Welding Equipment",
     "category.lab_wear": "Laboratory Wear",
     "category.other": "Other",
+    
+    // Success messages
+    "success.sizeSaved": "Size information saved successfully!",
 
     // Error messages in sizes page
     "error.title": "Error",
@@ -323,9 +348,59 @@ const en = {
     "error.notAuthenticated": "User not authenticated. Please log in again.",
     "error.loadingFailed": "Failed to load clothing items. Please try again.",
     "error.noClothingFound": "No clothing items found for your company",
+    "error.Missing required information": "Missing required information",
+    "error.No measurements provided": "No measurements provided",
+    "error.noMeasurementFields": "No measurement fields found for this clothing type",
+    "error.An unexpected error occurred": "An unexpected error occurred. Please try again later.",
     
     // Loading states
-    "loading.clothingTypes": "Loading clothing types..."
+    "loading.clothingTypes": "Loading clothing types...",
+    "loading.measurements": "Loading measurement fields...",
+    "loading.savedMeasurements": "Loading your saved measurements...",
+    
+    // Measurement instructions by clothing type
+    "measure.instruction.work-hat.1": "Wrap a flexible measuring tape around your head, about 1 inch above your eyebrows",
+    "measure.instruction.work-hat.2": "Keep the tape level and snug but not tight",
+    "measure.instruction.work-hat.3": "Record the measurement where the tape meets",
+    
+    "measure.instruction.safety-helmet.1": "Measure around your head at the widest point",
+    "measure.instruction.safety-helmet.2": "Position the tape about 1 inch above your eyebrows",
+    "measure.instruction.safety-helmet.3": "Ensure the tape is level all around your head",
+    
+    "measure.instruction.work-shirt.1": "Measure chest at the fullest part, under the arms",
+    "measure.instruction.work-shirt.2": "Measure neck circumference at the base",
+    "measure.instruction.work-shirt.3": "Measure sleeve length from shoulder to wrist",
+    "measure.instruction.work-shirt.4": "Keep the tape snug but not tight",
+    
+    "measure.instruction.polo-shirt.1": "Measure chest at the fullest part, under the arms",
+    "measure.instruction.polo-shirt.2": "Measure neck circumference at the base",
+    "measure.instruction.polo-shirt.3": "Measure sleeve length from shoulder to wrist",
+    "measure.instruction.polo-shirt.4": "Keep the tape snug but not tight",
+    
+    "measure.instruction.work-pants.1": "Measure waist at the narrowest point",
+    "measure.instruction.work-pants.2": "Measure hips at the fullest part",
+    "measure.instruction.work-pants.3": "Measure inseam from crotch to ankle",
+    "measure.instruction.work-pants.4": "Stand straight with feet slightly apart",
+    
+    "measure.instruction.work-shorts.1": "Measure waist at the narrowest point",
+    "measure.instruction.work-shorts.2": "Measure hips at the fullest part",
+    "measure.instruction.work-shorts.3": "Measure desired short length from waist",
+    "measure.instruction.work-shorts.4": "Stand straight with feet slightly apart",
+    
+    "measure.instruction.work-boots.1": "Measure foot length from heel to longest toe",
+    "measure.instruction.work-boots.2": "Measure foot width at the widest point",
+    "measure.instruction.work-boots.3": "Measure while standing with weight on both feet",
+    "measure.instruction.work-boots.4": "Measure both feet and use the larger measurement",
+    
+    "measure.instruction.safety-shoes.1": "Measure foot length from heel to longest toe",
+    "measure.instruction.safety-shoes.2": "Measure foot width at the widest point",
+    "measure.instruction.safety-shoes.3": "Measure while standing with weight on both feet",
+    "measure.instruction.safety-shoes.4": "Measure both feet and use the larger measurement",
+    
+    "measure.instruction.default.1": "Follow the general measurement guidelines",
+    "measure.instruction.default.2": "Use a flexible measuring tape",
+    "measure.instruction.default.3": "Keep measurements snug but not tight",
+    "measure.instruction.default.4": "Ask for assistance if needed"
   }
 
   export default en;
