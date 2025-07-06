@@ -1,6 +1,5 @@
 "use server"
 
-import { redirect } from "next/navigation"
 import * as bcrypt from "bcryptjs"
 
 interface AuthState {
@@ -27,9 +26,13 @@ export async function loginUser(prevState: AuthState | null, formData: FormData)
   }
 
   try {
-    // Find user in database
+    // Find user in database with company relation
     const user = await prisma.fc_user.findUnique({
       where: { email },
+      include: {
+        fc_company: true,
+        fc_user_type: true
+      }
     })
 
     if (!user) {
@@ -50,6 +53,11 @@ export async function loginUser(prevState: AuthState | null, formData: FormData)
       }
     }
 
+    // Determine user type and roles
+    const userType = user.user_type || 3; // Default to employee (3) if not set
+    const isSuperadmin = userType === 1; // Type 1 is superadmin
+    const isAdmin = userType === 2; // ONLY Type 2 is admin, as requested
+    
     // Create userData for client storage
     const userData = {
       id: user.id,
@@ -57,7 +65,12 @@ export async function loginUser(prevState: AuthState | null, formData: FormData)
       email: user.email,
       gender: user.is_male ? "Male" : "Female",
       companyId: user.company_id?.toString() || "N/A",
+      companyName: user.fc_company?.description || "N/A",
       joinDate: new Date().toISOString().split('T')[0],
+      userType: userType,
+      userTypeName: userType === 1 ? "Superadmin" : userType === 2 ? "Admin" : "Employee",
+      isAdmin: isAdmin,
+      isSuperadmin: isSuperadmin
     };
 
     // Create a session token
@@ -203,7 +216,7 @@ export async function registerUser(prevState: AuthState | null, formData: FormDa
       joinDate: new Date().toISOString().split('T')[0],
       userType: userType,
       userTypeName: "Employee", // Default for new users
-      isAdmin: userType === 1 || userType === 2, // Both superadmin and admin have admin privileges
+      isAdmin: userType === 2, // ONLY Type 2 is admin, as requested
       isSuperadmin: userType === 1 // Only type 1 is superadmin
     };
 
@@ -323,6 +336,11 @@ export async function completeOnboarding(prevState: AuthState | null, formData: 
       }
     });
 
+    // Determine user type and roles
+    const userType = user.user_type || 3; // Default to employee (3) if not set
+    const isSuperadmin = userType === 1; // Type 1 is superadmin
+    const isAdmin = userType === 2; // ONLY Type 2 is admin, as requested
+    
     // Create userData for client storage
     const userData = {
       id: user.id,
@@ -332,6 +350,10 @@ export async function completeOnboarding(prevState: AuthState | null, formData: 
       companyId: companyId?.toString() || "N/A",
       companyName: foundCompanyName,
       joinDate: new Date().toISOString().split('T')[0],
+      userType: userType,
+      userTypeName: userType === 1 ? "Superadmin" : userType === 2 ? "Admin" : "Employee",
+      isAdmin: isAdmin,
+      isSuperadmin: isSuperadmin
     };
 
     // Generate a session token
@@ -437,22 +459,25 @@ export async function handleGoogleAuth(googleProfile: {
         userData.userType = userWithCompany.fc_user_type.id;
         userData.userTypeName = userWithCompany.fc_user_type.description || "Employee";
         userData.isSuperadmin = userWithCompany.fc_user_type.id === 1; // Type 1 is superadmin
-        userData.isAdmin = userWithCompany.fc_user_type.id === 1 || userWithCompany.fc_user_type.id === 2; // Both superadmin and admin have admin privileges
+        userData.isAdmin = userWithCompany.fc_user_type.id === 2; // ONLY Type 2 is admin, as requested
       } else {
         // Fallback to direct user_type property if the relationship isn't loaded
         userData.userType = user.user_type || 3; // Default to employee if not set
         userData.isSuperadmin = user.user_type === 1;
-        userData.isAdmin = user.user_type === 1 || user.user_type === 2; // Both superadmin and admin have admin privileges
+        userData.isAdmin = user.user_type === 2; // ONLY Type 2 is admin, as requested
       }
       
       // Double check and ensure proper roles are set
       const userType = userData.userType;
       if (userType === 1) {
         userData.isSuperadmin = true;
-        userData.isAdmin = true;
+        userData.isAdmin = false; // Superadmin is NOT an admin
       } else if (userType === 2) {
         userData.isSuperadmin = false;
-        userData.isAdmin = true;
+        userData.isAdmin = true; // ONLY Type 2 is admin
+      } else {
+        userData.isSuperadmin = false;
+        userData.isAdmin = false;
       }
     }
     

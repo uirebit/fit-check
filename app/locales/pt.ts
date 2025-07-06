@@ -206,6 +206,7 @@ const pt = {
     "dashboard.manageSizes": "Gerenciar Tamanhos",
     "dashboard.accountSettings": "Configurações da Conta",
     "dashboard.updateProfile": "Atualize seu perfil e preferências",
+    "dashboard.noCompany": "Sem Empresa Atribuída",
     
     // Admin
     "admin.unauthorized": "Você não tem permissão para acessar esta página.",

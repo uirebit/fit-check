@@ -205,6 +205,7 @@ const es = {
     "dashboard.manageSizes": "Gestionar Tallas",
     "dashboard.accountSettings": "Configuración de Cuenta",
     "dashboard.updateProfile": "Actualiza tu perfil y preferencias",
+    "dashboard.noCompany": "Sin Empresa Asignada",
     
     // Admin
     "admin.unauthorized": "No tienes permisos para acceder a esta página.",

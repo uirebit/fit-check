@@ -32,9 +32,21 @@ export async function GET(request: NextRequest) {
       user = await prisma.fc_user.findUnique({
         where: { email },
         include: {
-          fc_company: true,
+          fc_company: {
+            select: {
+              id: true,
+              description: true
+            }
+          },
           fc_user_type: true
         }
+      });
+      
+      // Log for debugging
+      console.log("Found user with company data:", {
+        userId: user?.id,
+        companyId: user?.company_id,
+        companyInfo: user?.fc_company
       });
     } else {
       // Fallback to most recent user (for demo only)
@@ -43,7 +55,12 @@ export async function GET(request: NextRequest) {
           id: 'desc'
         },
         include: {
-          fc_company: true,
+          fc_company: {
+            select: {
+              id: true,
+              description: true
+            }
+          },
           fc_user_type: true
         }
       });
@@ -71,6 +88,28 @@ export async function GET(request: NextRequest) {
       isAdmin: isAdmin
     });
     
+    // Check if we need to fetch company info separately
+    let companyName = "N/A";
+    if (user.company_id && (!user.fc_company || !user.fc_company.description)) {
+      try {
+        // Fetch company info if relationship didn't work
+        const company = await prisma.fc_company.findUnique({
+          where: { id: user.company_id },
+          select: { description: true }
+        });
+        
+        if (company && company.description) {
+          companyName = company.description;
+          console.log(`Fetched company name separately: ${companyName} for company_id: ${user.company_id}`);
+        }
+      } catch (err) {
+        console.error("Error fetching company details:", err);
+      }
+    } else if (user.fc_company && user.fc_company.description) {
+      companyName = user.fc_company.description;
+      console.log(`Using related company name: ${companyName}`);
+    }
+    
     // Return user data (excluding sensitive information)
     return NextResponse.json({
       id: user.id,
@@ -78,7 +117,7 @@ export async function GET(request: NextRequest) {
       email: user.email,
       gender: user.is_male ? "Male" : "Female",
       companyId: user.company_id?.toString() || "N/A",
-      companyName: user.fc_company?.description || "N/A",
+      companyName: companyName, // Using our verified company name
       userType: userType,
       userTypeName: user.fc_user_type?.description || "Employee",
       isAdmin: isAdmin, // Both superadmin and admin have admin privileges

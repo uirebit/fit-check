@@ -132,7 +132,9 @@ export default function DashboardPage() {
                 userType: userType,
                 userTypeName: userData.userTypeName,
                 isAdmin: isAdmin,
-                isSuperadmin: isSuperadmin
+                isSuperadmin: isSuperadmin,
+                companyId: userData.companyId,
+                companyName: userData.companyName
               });
               
               const updatedUserData = {
@@ -327,7 +329,7 @@ export default function DashboardPage() {
                       <div className="space-y-2">
                         <p className="text-sm font-medium text-gray-500">{t("onboarding.companyName")}</p>
                         <div className="flex items-center space-x-2">
-                          <Badge variant="secondary">{userData.companyName || userData.companyId}</Badge>
+                          <Badge variant="secondary">{userData.companyName && userData.companyName !== "N/A" ? userData.companyName : t("dashboard.noCompany")}</Badge>
                         </div>
                       </div>
                     )}

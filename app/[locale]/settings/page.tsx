@@ -264,7 +264,7 @@ export default function SettingsPage() {
                         <div className="space-y-2">
                           <Label>{t("onboarding.companyName")}</Label>
                           <Input 
-                            value={userData.companyName || userData.companyId || ""}
+                            value={userData.companyName && userData.companyName !== "N/A" ? userData.companyName : t("dashboard.noCompany")}
                             disabled={true} // Company cannot be changed by user
                           />
                           <p className="text-xs text-gray-500">{t("settings.profile.companyCannotChange")}</p>

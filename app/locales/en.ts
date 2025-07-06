@@ -199,6 +199,7 @@ const en = {
     "dashboard.manageSizes": "Manage Sizes",
     "dashboard.accountSettings": "Account Settings",
     "dashboard.updateProfile": "Update your profile and preferences",
+    "dashboard.noCompany": "No Company Assigned",
     
     // Admin
     "admin.unauthorized": "You don't have permission to access this page.",
