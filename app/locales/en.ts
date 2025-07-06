@@ -1,3 +1,5 @@
+import { sign } from "crypto";
+
 const en = {
     // Header
     "header.title": "WorkWear Sizes",
@@ -9,6 +11,7 @@ const en = {
     // Main page
     "main.title": "Manage Your Work Clothing Sizes",
     "main.subtitle": "Select a clothing type and follow the measurement instructions to get your perfect fit.",
+    "main.description": "Our easy-to-use sizing tool helps you find the perfect fit for your work clothing.",
     "main.selectClothing": "Select Clothing Type",
     "main.selectClothingDesc": "Choose the type of work clothing you want to measure",
     "main.selectPlaceholder": "Select a clothing type...",
@@ -18,6 +21,8 @@ const en = {
     "main.features.fast.description": "Quick processing of your measurements.",
     "main.features.developer_friendly.title": "Developer Friendly",
     "main.features.developer_friendly.description": "Easily extend and integrate with other tools.",
+    "main.trusted_by": "Trusted by",
+    "main.rating": "Customer Rating",
 
 
     // Clothing types
@@ -110,6 +115,69 @@ const en = {
     "language.english": "English",
     "language.spanish": "Español",
     "language.portuguese": "Português",
+
+    //Login and Sign Up
+    "login.form.email": "Email",
+    "login.form.placeholderemail": "Enter your email",
+    "login.form.password": "Password",
+    "login.form.placeholderpassword": "Enter your password",
+    "login.form.submit": "Sign in",
+    "login.form.signingin": "Sign in...",
+    "login.form.forgotPassword": "Forgot your password?",
+    "login.form.error": "Error signing in. Please check your credentials and try again.",
+    "login.form.success": "Successfully signed in. Redirecting...",
+    "register.form.email": "Email",
+    "register.form.placeholderemail": "Enter your email",
+    "register.form.password": "Password",
+    "register.form.placeholderpassword": "Enter your password",
+    "register.form.confirmPassword": "Confirm Password",
+    "register.form.placeholderconfirmPassword": "Confirm your password",
+    "register.form.submit": "Sign up",
+    "register.form.success": "Registration successful. Redirecting...",
+    "register.form.error": "Error during registration. Please try again.",
+    "register.form.terms": "I agree to the Terms of Service and Privacy Policy",
+    "register.form.termsError": "You must agree to the Terms of Service and Privacy Policy",
+    "register.form.passwordMismatch": "Passwords do not match. Please try again.",
+    "register.form.weakPassword": "Password is too weak. Please choose a stronger password.",
+    "register.form.emailExists": "An account with this email already exists. Please sign in or use a different email.",
+    "register.form.successMessage": "Registration successful! Please check your email to verify your account.",
+    "register.form.verificationEmailSent": "A verification email has been sent to your email address. Please check your inbox and follow the instructions to verify your account.",
+    "register.form.verificationEmailError": "Error sending verification email. Please try again later.",
+    "register.form.verificationEmailSubject": "Verify Your WorkWear Sizes Account",
+
+
+    "onboarding.completeprofile" : "Complete Your Profile",
+    "onboarding.completeprofile.description" : "Please provide some additional information to complete your registration",
+    "onboarding.welcome" : "Welcome! Just a few more details to get started.",
+    "onboarding.companyId" : "Company ID",
+    "onboarding.companyId.placeholder" : "Enter your company ID",
+    "onboarding.companyId.help" : "This helps us identify your organization and set up your workspace.",
+    "onboarding.gender" : "Gender",
+    "onboarding.gender.male" : "Male",
+    "onboarding.gender.female" : "Female",
+    "onboarding.success" : "Profile completed successfully! Redirecting to dashboard...",
+    "onboarding.submitting" : "Completing setup...",
+    "onboarding.redirecting" : "Redirecting...",
+    "onboarding.completeSetup" : "Complete Setup",
+    "signin.back": "Welcome back",
+    "signin.create": "Create account",
+    "signin.enterCredentials": "Enter your credentials to access your account",
+    "signin.enterInformation": "Enter your information to create a new account",
+    "signin.signInWithGoogle": "Continue with Google",
+    "signin.signUpWithGoogle": "Sign up with Google",
+    "signin.signingInWithGoogle": "Signing in with Google...",
+    "signin.orSignInWithEmail": "Or sign in with email",
+    "signin.orContinueWithEmail": "Or continue with email",
+    "signin.dontHaveAccount": "Don't have an account? Sign up",
+    "signin.alreadyHaveAccount": "Already have an account? Sign in",
+    
+    // Onboarding Form    
+    "onboarding.companyIdPlaceholder": "Enter your company ID",
+    "onboarding.companyIdHelp": "This helps us identify your organization and set up your workspace.",    
+    "onboarding.genderMale": "Male",
+    "onboarding.genderFemale": "Female",
+    "onboarding.successMessage": "Profile completed successfully! Redirecting to dashboard...",
+    "onboarding.completingSetup": "Completing setup...",    
   }
 
   export default en;

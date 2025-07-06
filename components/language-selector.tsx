@@ -1,40 +1,44 @@
 "use client";
 
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { usePathname, useRouter } from "next/navigation";
-import { Globe } from "lucide-react";
 
-export function LanguageSelector() {
+const locales = [
+  { code: "en", label: "English" },
+  { code: "es", label: "Español" },
+  { code: "pt", label: "Português" },
+];
+
+export default function LanguageSelector() {
   const router = useRouter();
   const pathname = usePathname();
 
   // Detect current locale
-  const segments = pathname.split("/");
-  const currentLocale = ["en", "es", "pt"].includes(segments[1]) ? segments[1] : "en";
+  const pathSegments = pathname.split("/");
+  const currentLocale = locales.find((l) => l.code === pathSegments[1])?.code || "en";
 
-  const handleChange = (value: string) => {
-    // Reemplaza el segmento de idioma en la URL
+  const handleChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const newLocale = e.target.value;
+
+    // Replace the locale in the path
     const newPath = [""]
-      .concat([value])
-      .concat(segments.slice(2))
+      .concat([newLocale])
+      .concat(pathSegments.slice(2))
       .join("/");
 
     router.push(newPath);
   };
 
   return (
-    <div className="flex items-center space-x-2">
-      <Globe className="h-4 w-4 text-gray-500" />
-      <Select value={currentLocale} onValueChange={handleChange}>
-        <SelectTrigger className="w-32">
-          <SelectValue />
-        </SelectTrigger>
-        <SelectContent>
-          <SelectItem value="en">English</SelectItem>
-          <SelectItem value="es">Español</SelectItem>
-          <SelectItem value="pt">Português</SelectItem>
-        </SelectContent>
-      </Select>
-    </div>
+    <select
+      value={currentLocale}
+      onChange={handleChange}
+      className="border px-2 py-1 rounded"
+    >
+      {locales.map((locale) => (
+        <option key={locale.code} value={locale.code}>
+          {locale.label}
+        </option>
+      ))}
+    </select>
   );
 }

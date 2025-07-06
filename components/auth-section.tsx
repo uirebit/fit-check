@@ -11,10 +11,12 @@ import { Button } from "@/components/ui/button"
 import { Separator } from "@/components/ui/separator"
 import { Chrome } from "lucide-react"
 import { handleGoogleAuth } from "@/app/actions/auth"
+import { useLanguage } from "@/contexts/language-context"
 
 type AuthStep = "auth" | "onboarding"
 
 export function AuthSection() {
+  const { t } = useLanguage();
   const [isLogin, setIsLogin] = useState(true)
   const [authStep, setAuthStep] = useState<AuthStep>("auth")
   const [userEmail, setUserEmail] = useState<string>("")
@@ -68,9 +70,9 @@ export function AuthSection() {
     return (
       <Card className="w-full max-w-md shadow-xl">
         <CardHeader className="space-y-1">
-          <CardTitle className="text-2xl font-bold text-center">Complete Your Profile</CardTitle>
+          <CardTitle className="text-2xl font-bold text-center">{t("onboarding.completeprofile")}</CardTitle>
           <CardDescription className="text-center">
-            Please provide some additional information to complete your registration
+            {t("onboarding.completeprofile.description")}
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -83,9 +85,9 @@ export function AuthSection() {
   return (
     <Card className="w-full max-w-md shadow-xl">
       <CardHeader className="space-y-1">
-        <CardTitle className="text-2xl font-bold text-center">{isLogin ? "Welcome back" : "Create account"}</CardTitle>
+        <CardTitle className="text-2xl font-bold text-center">{isLogin ? t("signin.back") : t("signin.create")}</CardTitle>
         <CardDescription className="text-center">
-          {isLogin ? "Enter your credentials to access your account" : "Enter your information to create a new account"}
+          {isLogin ? t("signin.enterCredentials") : t("signin.enterInformation")}
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
@@ -97,10 +99,10 @@ export function AuthSection() {
         >
           <Chrome className="mr-2 h-4 w-4" />
           {loading
-            ? "Signing in with Google..."
+            ? t("signin.signingInWithGoogle")
             : isLogin
-            ? "Continue with Google"
-            : "Sign up with Google"}
+            ? t("signin.signInWithGoogle")
+            : t("signin.signUpWithGoogle")}
         </Button>
 
         <div className="relative">
@@ -109,7 +111,7 @@ export function AuthSection() {
           </div>
           <div className="relative flex justify-center text-xs uppercase">
             <span className="bg-background px-2 text-muted-foreground">
-              {isLogin ? "Or sign in with email" : "Or continue with email"}
+              {isLogin ? t("signin.orSignInWithEmail") : t("signin.orContinueWithEmail")}
             </span>
           </div>
         </div>
@@ -118,7 +120,7 @@ export function AuthSection() {
 
         <div className="text-center">
           <Button variant="link" onClick={() => setIsLogin(!isLogin)} className="text-sm">
-            {isLogin ? "Don't have an account? Sign up" : "Already have an account? Sign in"}
+            {isLogin ? t("signin.dontHaveAccount") : t("signin.alreadyHaveAccount")}
           </Button>
         </div>
       </CardContent>

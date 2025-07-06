@@ -1,7 +1,6 @@
 "use server"
 
 import { redirect } from "next/navigation"
-import prisma from "@/lib/prisma"
 import * as bcrypt from "bcryptjs"
 
 interface AuthState {
@@ -11,6 +10,7 @@ interface AuthState {
 }
 
 export async function loginUser(prevState: AuthState | null, formData: FormData): Promise<AuthState> {
+  const { default: prisma } = await import("@/lib/prisma");  
   const email = formData.get("email") as string
   const password = formData.get("password") as string
 
@@ -52,6 +52,7 @@ export async function registerUser(prevState: AuthState | null, formData: FormDa
   const email = formData.get("email") as string
   const password = formData.get("password") as string
   const confirmPassword = formData.get("confirmPassword") as string
+  const { default: prisma } = await import("@/lib/prisma");
 
   if (!name || !email || !password || !confirmPassword) {
     return {
@@ -117,6 +118,7 @@ export async function completeOnboarding(prevState: AuthState | null, formData: 
   const email = formData.get("email") as string
   const companyDescription = formData.get("companyId") as string
   const gender = formData.get("gender") as string
+  const { default: prisma } = await import("@/lib/prisma");
 
   // Basic validation
   if (!email || !companyDescription || !gender) {
@@ -183,6 +185,8 @@ export async function handleGoogleAuth(googleProfile: {
   verified_email?: boolean
 }) {
   try {
+    const { default: prisma } = await import("@/lib/prisma");
+
     // Check if user exists by email
     let user = await prisma.fc_user.findUnique({
       where: { email: googleProfile.email },
@@ -216,6 +220,7 @@ export async function handleGoogleAuth(googleProfile: {
       error: undefined,
     }
   } catch (err: any) {
+      console.error("Google Auth Error:", err);
     return {
       success: false,
       error: "Google authentication failed. Please try again.",

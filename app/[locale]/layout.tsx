@@ -1,32 +1,36 @@
-import type React from "react"
-import type { Metadata } from "next"
-import { Inter } from "next/font/google"
-import "../globals.css"
-import { GoogleOAuthProvider } from "@react-oauth/google"
-import { LanguageProvider } from "@/contexts/language-context"
+import type React from "react";
+import type { Metadata } from "next";
+import { Inter } from "next/font/google";
+import "../globals.css";
+import { GoogleOAuthProvider } from "@react-oauth/google";
+import { LanguageProvider } from "@/contexts/language-context";
+import LanguageSelector from "@/components/language-selector"; // Usa mayúscula inicial en el nombre del fichero
 
-const inter = Inter({ subsets: ["latin"] })
+const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
   title: "WorkWear Sizes App",
   description: "Manage your work clothing sizes with precision",
-  generator: 'v0.dev'
-}
+  generator: "v0.dev",
+};
 
 export default function RootLayout({
   children,
 }: {
-  children: React.ReactNode
+  children: React.ReactNode;
 }) {
   return (
     <html lang="en">
       <body className={inter.className}>
-         <LanguageProvider>
-            <GoogleOAuthProvider clientId="806133975237-vscpf295q14u2p73p7v446k76l3e4164.apps.googleusercontent.com">
-              {children}
-            </GoogleOAuthProvider>
-         </LanguageProvider>
+        <LanguageProvider>
+          <GoogleOAuthProvider clientId="806133975237-vscpf295q14u2p73p7v446k76l3e4164.apps.googleusercontent.com">
+            <header className="flex justify-end p-4">
+              <LanguageSelector />
+            </header>
+            <main>{children}</main>
+          </GoogleOAuthProvider>
+        </LanguageProvider>
       </body>
     </html>
-  )
+  );
 }
