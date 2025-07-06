@@ -5,7 +5,8 @@ const PROTECTED_PATHS = [
   '/dashboard',
   '/sizes',
   '/settings',
-  '/account'
+  '/account',
+  '/admin'
 ];
 
 export async function middleware(request: NextRequest) {

@@ -178,8 +178,12 @@ const pt = {
     "onboarding.companyId": "ID da Empresa",
     "onboarding.companyName": "Nome da Empresa",
     "onboarding.companyIdPlaceholder": "Digite o ID da sua empresa",
+    "onboarding.companyNamePlaceholder": "Digite o nome da sua empresa",
     "onboarding.companyIdHelp": "Isso nos ajuda a identificar sua organização e configurar seu espaço de trabalho.",
+    "onboarding.companyNameHelp": "Insira o nome da sua empresa para personalização e configuração do seu espaço de trabalho.",
     "onboarding.error.invalidCompanyId": "O ID da empresa deve ter entre 3 e 20 caracteres alfanuméricos",
+    "onboarding.error.invalidCompanyName": "O nome da empresa deve ter entre 2 e 100 caracteres",
+    "onboarding.error.companyNotFound": "A empresa indicada não existe em nossos registros. Por favor, verifique o nome e tente novamente.",
     "onboarding.error.userNotFound": "Usuário não encontrado. Por favor, cadastre-se ou faça login novamente.",
     "onboarding.error.serverError": "Ocorreu um erro ao atualizar seu perfil. Por favor tente novamente.",
     "onboarding.gender": "Gênero",
@@ -200,7 +204,52 @@ const pt = {
     "dashboard.manageSizesDesc": "Gerencie as medidas e tamanhos da sua roupa de trabalho",
     "dashboard.manageSizes": "Gerenciar Tamanhos",
     "dashboard.accountSettings": "Configurações da Conta",
-    "dashboard.updateProfile": "Atualize seu perfil e preferências"
+    "dashboard.updateProfile": "Atualize seu perfil e preferências",
+    
+    // Admin
+    "admin.unauthorized": "Você não tem permissão para acessar esta página.",
+    "admin.backToDashboard": "Voltar ao Painel",
+    "admin.actions": "Ações",
+    "admin.cancel": "Cancelar",
+    
+    // Admin - Companies
+    "admin.companies.manage": "Gerenciar Empresas",
+    "admin.companies.title": "Gestão de Empresas",
+    "admin.companies.description": "Adicionar, editar ou remover empresas no sistema",
+    "admin.companies.add": "Adicionar Empresa",
+    "admin.companies.edit": "Editar",
+    "admin.companies.delete": "Excluir",
+    "admin.companies.save": "Salvar Alterações",
+    "admin.companies.name": "Nome da Empresa",
+    "admin.companies.namePlaceholder": "Digite o nome da empresa",
+    "admin.companies.userCount": "Usuários",
+    "admin.companies.noCompanies": "Nenhuma empresa encontrada. Adicione sua primeira empresa.",
+    "admin.companies.tableCaption": "Uma lista de todas as empresas no sistema.",
+    "admin.companies.addCompany": "Adicionar Nova Empresa",
+    "admin.companies.editCompany": "Editar Empresa",
+    "admin.companies.addDescription": "Criar uma nova empresa no sistema",
+    "admin.companies.editDescription": "Atualizar informações da empresa",
+    "admin.companies.confirmDelete": "Excluir Empresa",
+    "admin.companies.deleteWarning": "Isso excluirá permanentemente a empresa. Esta ação não pode ser desfeita se não houver usuários atribuídos a esta empresa.",
+    "admin.companies.nameRequired": "O nome da empresa é obrigatório.",
+    
+    // Settings
+    "settings.title": "Configurações da Conta",
+    "settings.backToDashboard": "Voltar ao Painel",
+    "settings.tabs.profile": "Perfil",
+    "settings.tabs.preferences": "Preferências",
+    "settings.profile.title": "Informações de Perfil",
+    "settings.profile.description": "Atualize suas informações pessoais",
+    "settings.profile.emailCannotChange": "O endereço de e-mail não pode ser alterado",
+    "settings.profile.companyCannotChange": "A empresa não pode ser alterada aqui. Entre em contato com o administrador.",
+    "settings.profile.save": "Salvar Alterações",
+    "settings.profile.saving": "Salvando...",
+    "settings.preferences.title": "Preferências",
+    "settings.preferences.description": "Personalize as configurações da sua conta",
+    "settings.success.profileUpdated": "Perfil atualizado com sucesso",
+    "settings.error.loadFailed": "Falha ao carregar as configurações. Por favor tente novamente.",
+    "settings.error.saveFailed": "Falha ao salvar as configurações. Por favor tente novamente.",
+    "settings.error.notAuthenticated": "Você deve estar conectado para acessar as configurações."
   }
 
 export default pt;

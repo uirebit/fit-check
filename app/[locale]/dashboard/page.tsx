@@ -20,6 +20,10 @@ interface UserData {
   isLoading?: boolean;
   language?: string;
   picture?: string;
+  userType?: number;
+  userTypeName?: string;
+  isAdmin?: boolean;
+  isSuperadmin?: boolean;
 }
 
 export default function DashboardPage() {
@@ -59,10 +63,27 @@ export default function DashboardPage() {
         if (storedUser) {
           // If we have user data in localStorage, use it
           const userData = JSON.parse(storedUser);
+          
+          // Ensure user roles are correctly set based on userType
+          const userType = userData.userType || 3; // Default to employee (3) if not set
+          const isSuperadmin = userData.isSuperadmin === true || userType === 1;
+          const isAdmin = userData.isAdmin === true || userType === 1 || userType === 2;
+          
+          // Log user data for debugging
+          console.log("User data from localStorage:", {
+            userType: userType,
+            userTypeName: userData.userTypeName,
+            isAdmin: isAdmin,
+            isSuperadmin: isSuperadmin
+          });
+          
           setUserData({
             ...userData,
             isLoading: false,
             language: language,
+            userType: userType,
+            isAdmin: isAdmin, // Both superadmin and admin have admin privileges
+            isSuperadmin: isSuperadmin, // Only superadmin (type 1) can manage companies
             gender: userData.gender ? 
               t(`onboarding.gender${userData.gender.charAt(0).toUpperCase() + userData.gender.slice(1)}`) : 
               t("onboarding.genderMale")
@@ -100,16 +121,38 @@ export default function DashboardPage() {
             
             if (response.ok) {
               const userData = await response.json();
-              setUserData({
+              
+              // Ensure user roles are correctly set based on userType
+              const userType = userData.userType || 3; // Default to employee (3) if not set
+              const isSuperadmin = userData.isSuperadmin === true || userType === 1;
+              const isAdmin = userData.isAdmin === true || userType === 1 || userType === 2;
+              
+              // Log API response data for debugging
+              console.log("User data from API:", {
+                userType: userType,
+                userTypeName: userData.userTypeName,
+                isAdmin: isAdmin,
+                isSuperadmin: isSuperadmin
+              });
+              
+              const updatedUserData = {
                 ...userData,
+                userType: userType,
+                isAdmin: isAdmin, // Both superadmin and admin have admin privileges
+                isSuperadmin: isSuperadmin // Only superadmin (type 1) can manage companies
+              };
+              
+              setUserData({
+                ...updatedUserData,
                 isLoading: false,
                 language: language,
                 gender: userData.gender ? 
                   t(`onboarding.gender${userData.gender.charAt(0).toUpperCase() + userData.gender.slice(1)}`) : 
                   t("onboarding.genderMale")
               });
+              
               // Store in localStorage for future use
-              localStorage.setItem("user_data", JSON.stringify(userData));
+              localStorage.setItem("user_data", JSON.stringify(updatedUserData));
               return;
             } else {
               // If API returns error status, redirect to login
@@ -224,7 +267,11 @@ export default function DashboardPage() {
                   {userData.isLoading ? "..." : userData.name}
                 </span>
               </div>
-              <Button variant="ghost" size="sm">
+              <Button 
+                variant="ghost" 
+                size="sm" 
+                onClick={() => router.push(`/${language}/settings`)}
+              >
                 <Settings className="h-4 w-4 mr-2" />
                 {t("header.settings")}
               </Button>
@@ -318,9 +365,36 @@ export default function DashboardPage() {
                   <CardDescription>{t("dashboard.updateProfile")}</CardDescription>
                 </CardHeader>
                 <CardContent>
-                  <Button className="w-full" variant="outline">
-                    {t("dashboard.accountSettings")}
-                  </Button>
+                  <div className="space-y-4">
+                    {/* Superadmin button for managing companies (only shown to superadmins - userType 1) */}
+                    {(userData.isSuperadmin === true || userData.userType === 1) && (
+                      <Button 
+                        className="w-full" 
+                        onClick={() => router.push(`/${userData.language || language}/admin/company-management`)}
+                      >
+                        {t("admin.companies.manage")}
+                      </Button>
+                    )}
+                    
+                    {/* Other admin options can be added here for both admin types */}
+                    {(userData.isAdmin === true || userData.userType === 1 || userData.userType === 2) && !userData.isSuperadmin && (
+                      <Button 
+                        className="w-full"
+                        variant="secondary"
+                      >
+                        {t("admin.dashboard")}
+                      </Button>
+                    )}
+                    
+                    {/* Account settings button */}
+                    <Button 
+                      className="w-full" 
+                      variant="outline" 
+                      onClick={() => router.push(`/${userData.language || language}/settings`)}
+                    >
+                      {t("dashboard.accountSettings")}
+                    </Button>
+                  </div>
                 </CardContent>
               </Card>
             </div>

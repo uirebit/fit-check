@@ -1,29 +1,153 @@
 "use client"
 
 import { useActionState } from "react"
+import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { registerUser } from "@/app/actions/auth"
-import { Loader2 } from "lucide-react"
+import { Loader2, User, Building } from "lucide-react"
 import { useLanguage } from "@/contexts/language-context"
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
+import { useRouter } from "next/navigation"
 
 export function RegisterForm() {
   const { t, language } = useLanguage();
-  const [state, action, isPending] = useActionState(registerUser, null)
+  const router = useRouter();
+  const [state, action, isPending] = useActionState(registerUser, null);
+  
+  // State to persist form data across validation failures
+  const [formData, setFormData] = useState({
+    name: "",
+    email: "",
+    companyName: "",
+    gender: "male"
+  });
+
+  // Handle form field changes
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({
+      ...prev,
+      [name]: value
+    }));
+  };
+
+  // Handle radio group changes
+  const handleGenderChange = (value: string) => {
+    setFormData(prev => ({
+      ...prev,
+      gender: value
+    }));
+  };
+
+  // Handle successful registration
+  useEffect(() => {
+    async function handleSuccessfulRegister() {
+      if (state?.success && state?.userData && state?.sessionToken) {
+        // Store user data in localStorage
+        localStorage.setItem("user_data", JSON.stringify(state.userData));
+        
+        // Store session token
+        localStorage.setItem("auth_token", state.sessionToken);
+        localStorage.setItem("user_session", "active");
+        
+        // Set cookies for server-side auth
+        try {
+          await fetch('/api/auth/cookie', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ token: state.sessionToken, session: 'active' })
+          });
+        } catch (cookieError) {
+          console.error("Failed to set auth cookies", cookieError);
+        }
+
+        // Redirect to dashboard after a short delay
+        setTimeout(() => {
+          router.push(`/${language}/dashboard`);
+        }, 1000);
+      }
+    }
+    
+    handleSuccessfulRegister();
+  }, [state, router, language]);
 
   return (
     <form action={action} className="space-y-4">
       <input type="hidden" name="locale" value={language} />
       <div className="space-y-2">
         <Label htmlFor="name">{t("register.form.name")}</Label>
-        <Input id="name" name="name" type="text" placeholder={t("register.form.placeholdername")} required disabled={isPending} />
+        <Input 
+          id="name" 
+          name="name" 
+          type="text" 
+          placeholder={t("register.form.placeholdername")} 
+          required 
+          disabled={isPending}
+          value={formData.name}
+          onChange={handleChange} 
+        />
       </div>
 
       <div className="space-y-2">
         <Label htmlFor="email">{t("register.form.email")}</Label>
-        <Input id="email" name="email" type="email" placeholder={t("register.form.placeholderemail")} required disabled={isPending} />
+        <Input 
+          id="email" 
+          name="email" 
+          type="email" 
+          placeholder={t("register.form.placeholderemail")} 
+          required 
+          disabled={isPending}
+          value={formData.email}
+          onChange={handleChange}
+        />
+      </div>
+
+      <div className="space-y-2">
+        <Label htmlFor="companyName" className="flex items-center">
+          <Building className="h-4 w-4 mr-2" />
+          {t("onboarding.companyName")}
+        </Label>
+        <Input
+          id="companyName"
+          name="companyName"
+          type="text"
+          placeholder={t("onboarding.companyNamePlaceholder") || "Enter your company name"}
+          required
+          disabled={isPending}
+          value={formData.companyName}
+          onChange={handleChange}
+          className={state?.error === "onboarding.error.companyNotFound" ? "border-red-500" : ""}
+        />
+      </div>
+      
+      {/* Gender Selection */}
+      <div className="space-y-3">
+        <Label className="flex items-center">
+          <User className="h-4 w-4 mr-2" />
+          {t("onboarding.gender")}
+        </Label>
+        <RadioGroup 
+          name="gender" 
+          value={formData.gender}
+          onValueChange={handleGenderChange}
+          disabled={isPending}
+        >
+          <div className="flex items-center space-x-2">
+            <RadioGroupItem value="male" id="reg-male" />
+            <Label htmlFor="reg-male" className="font-normal">
+              {t("onboarding.genderMale")}
+            </Label>
+          </div>
+          <div className="flex items-center space-x-2">
+            <RadioGroupItem value="female" id="reg-female" />
+            <Label htmlFor="reg-female" className="font-normal">
+              {t("onboarding.genderFemale")}
+            </Label>
+          </div>
+        </RadioGroup>
       </div>
 
       <div className="space-y-2">
@@ -62,11 +186,16 @@ export function RegisterForm() {
         </Alert>
       )}
 
-      <Button type="submit" className="w-full" disabled={isPending}>
+      <Button type="submit" className="w-full" disabled={isPending || state?.success}>
         {isPending ? (
           <>
             <Loader2 className="mr-2 h-4 w-4 animate-spin" />
             {t("register.form.creating")}
+          </>
+        ) : state?.success ? (
+          <>
+            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+            {t("onboarding.redirecting")}
           </>
         ) : (
           t("register.form.submit")

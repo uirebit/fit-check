@@ -71,22 +71,23 @@ export function OnboardingForm({ userEmail, onComplete }: OnboardingFormProps) {
         <p className="text-sm text-muted-foreground">{t("onboarding.welcome")}</p>
       </div>
 
-      {/* Company ID */}
+      {/* Company Name */}
       <div className="space-y-2">
-        <Label htmlFor="companyId" className="flex items-center">
+        <Label htmlFor="companyName" className="flex items-center">
           <Building className="h-4 w-4 mr-2" />
-          {t("onboarding.companyId")}
+          {t("onboarding.companyName")}
         </Label>
         <Input
-          id="companyId"
-          name="companyId"
+          id="companyName"
+          name="companyName"
           type="text"
-          placeholder={t("onboarding.companyIdPlaceholder")}
+          placeholder={t("onboarding.companyNamePlaceholder") || "Enter your company name"}
           required
           disabled={isPending}
+          className={state?.error === "onboarding.error.companyNotFound" ? "border-red-500" : ""}
         />
         <p className="text-xs text-muted-foreground">
-          {t("onboarding.companyIdHelp")}
+          {t("onboarding.companyNameHelp") || t("onboarding.companyIdHelp")}
         </p>
       </div>
 

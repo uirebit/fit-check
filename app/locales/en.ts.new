@@ -180,12 +180,16 @@ const en = {
     "onboarding.companyNameHelp": "Enter your company name for personalization and workspace setup.",
     "onboarding.error.invalidCompanyId": "Company ID must be 3-20 alphanumeric characters",
     "onboarding.error.invalidCompanyName": "Company name must be 2-100 characters",
-    "onboarding.error.companyNotFound": "The specified company doesn't exist in our records. Please verify the name and try again.",
     "onboarding.gender": "Gender",
     "onboarding.genderMale": "Male",
     "onboarding.genderFemale": "Female",
     "onboarding.successMessage": "Profile completed successfully! Redirecting to dashboard...",
     "onboarding.completingSetup": "Completing setup...",
+    "onboarding.redirecting": "Redirecting...",
+    "onboarding.completeSetup": "Complete Setup",
+    "onboarding.welcome": "Welcome! Just a few more details to get started.",
+    "onboarding.completeprofile": "Complete Your Profile",
+    "onboarding.completeprofile.description": "Please provide additional information to complete your registration",
     
     // Dashboard
     "dashboard.welcomeBack": "Welcome back",
@@ -198,54 +202,10 @@ const en = {
     "dashboard.manageSizes": "Manage Sizes",
     "dashboard.accountSettings": "Account Settings",
     "dashboard.updateProfile": "Update your profile and preferences",
-    
-    // Admin
-    "admin.unauthorized": "You don't have permission to access this page.",
-    "admin.backToDashboard": "Back to Dashboard",
-    "admin.actions": "Actions",
-    "admin.cancel": "Cancel",
-    
-    // Admin - Companies
-    "admin.companies.manage": "Manage Companies",
-    "admin.companies.title": "Company Management",
-    "admin.companies.description": "Add, edit or remove companies in the system",
-    "admin.companies.add": "Add Company",
-    "admin.companies.edit": "Edit",
-    "admin.companies.delete": "Delete",
-    "admin.companies.save": "Save Changes",
-    "admin.companies.name": "Company Name",
-    "admin.companies.namePlaceholder": "Enter company name",
-    "admin.companies.userCount": "Users",
-    "admin.companies.noCompanies": "No companies found. Add your first company.",
-    "admin.companies.tableCaption": "A list of all companies in the system.",
-    "admin.companies.addCompany": "Add New Company",
-    "admin.companies.editCompany": "Edit Company",
-    "admin.companies.addDescription": "Create a new company in the system",
-    "admin.companies.editDescription": "Update company information",
-    "admin.companies.confirmDelete": "Delete Company",
-    "admin.companies.deleteWarning": "This will permanently delete the company. This action cannot be undone if no users are assigned to this company.",
-    "admin.companies.nameRequired": "Company name is required.",
 
     "login.form.placeholderemail": "Enter your email",
     "login.form.placeholderpassword": "Enter your password",
     
-    // Settings
-    "settings.title": "Account Settings",
-    "settings.backToDashboard": "Back to Dashboard",
-    "settings.tabs.profile": "Profile",
-    "settings.tabs.preferences": "Preferences",
-    "settings.profile.title": "Profile Information",
-    "settings.profile.description": "Update your personal information",
-    "settings.profile.emailCannotChange": "Email address cannot be changed",
-    "settings.profile.companyCannotChange": "Company cannot be changed here. Contact administrator.",
-    "settings.profile.save": "Save Changes",
-    "settings.profile.saving": "Saving...",
-    "settings.preferences.title": "Preferences",
-    "settings.preferences.description": "Customize your account settings",
-    "settings.success.profileUpdated": "Profile updated successfully",
-    "settings.error.loadFailed": "Failed to load settings. Please try again.",
-    "settings.error.saveFailed": "Failed to save settings. Please try again.",
-    "settings.error.notAuthenticated": "You must be signed in to access settings."
   }
 
   export default en;

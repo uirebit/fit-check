@@ -80,7 +80,13 @@ export function AuthSection() {
         } else if (result.redirect) {
           // Store the user data and session token before redirecting
           if (result.userData) {
-            localStorage.setItem("user_data", JSON.stringify(result.userData));
+            // Ensure admin status is correctly set in localStorage
+            const userData = {
+              ...result.userData,
+              // Make sure isAdmin is explicitly set as a boolean
+              isAdmin: result.userData.isAdmin === true || result.userData.userType === 1
+            };
+            localStorage.setItem("user_data", JSON.stringify(userData));
           }
           
           if (result.sessionToken) {

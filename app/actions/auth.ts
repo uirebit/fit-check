@@ -91,10 +91,13 @@ export async function registerUser(prevState: AuthState | null, formData: FormDa
   const email = formData.get("email") as string
   const password = formData.get("password") as string
   const confirmPassword = formData.get("confirmPassword") as string
+  const companyName = formData.get("companyName") as string
+  const gender = formData.get("gender") as string
   const locale = formData.get("locale") as string || "en"; // Get the current locale
   const { default: prisma } = await import("@/lib/prisma");
 
-  if (!name || !email || !password || !confirmPassword) {
+  // Basic form validation
+  if (!name || !email || !password || !confirmPassword || !companyName || !gender) {
     return {
       success: false,
       error: "login.form.emptyFields",
@@ -136,23 +139,92 @@ export async function registerUser(prevState: AuthState | null, formData: FormDa
       errorLocale: true
     }
   }
+  
+  // Find or verify company exists
+  let companyId: number | null = null;
+  let foundCompanyName = "";
+  
+  try {
+    // Check if company exists (case insensitive)
+    const existingCompany = await prisma.fc_company.findFirst({
+      where: { 
+        description: { 
+          equals: companyName, 
+          mode: 'insensitive' 
+        } 
+      }
+    });
+    
+    if (existingCompany) {
+      companyId = existingCompany.id;
+      foundCompanyName = existingCompany.description;
+    } else {
+      // Company doesn't exist, return error
+      return {
+        success: false,
+        error: "onboarding.error.companyNotFound",
+        errorLocale: true
+      };
+    }
+  } catch (error) {
+    console.error("Error checking company:", error);
+    return {
+      success: false,
+      error: "register.form.serverError",
+      errorLocale: true
+    };
+  }
 
-  // Hash password
-  const password_hash = await bcrypt.hash(password, 10)
+  try {
+    // Hash password
+    const password_hash = await bcrypt.hash(password, 10)
 
-  // Create user in database
-  await prisma.fc_user.create({
-    data: {
-      username: name,
-      email,
-      password_hash,
-      is_male: true, // Default, update as needed
-    },
-  })
+    // Create user in database with company and gender
+    const user = await prisma.fc_user.create({
+      data: {
+        username: name,
+        email,
+        password_hash,
+        is_male: gender === 'male',
+        company_id: companyId,
+      },
+    })
+    
+    // Create userData for client storage
+    // By default, new users are type 3 (Employee)
+    const userType = user.user_type || 3;
+    const userData = {
+      id: user.id,
+      name: user.username,
+      email: user.email,
+      gender: gender === 'male' ? "Male" : "Female",
+      companyId: companyId?.toString() || "N/A",
+      companyName: foundCompanyName,
+      joinDate: new Date().toISOString().split('T')[0],
+      userType: userType,
+      userTypeName: "Employee", // Default for new users
+      isAdmin: userType === 1 || userType === 2, // Both superadmin and admin have admin privileges
+      isSuperadmin: userType === 1 // Only type 1 is superadmin
+    };
 
-  return {
-    success: true,
-    message: "Account created successfully! You can now sign in.",
+    // Create a session token
+    const sessionToken = generateSessionToken();
+    
+    // Return success with user data for auto-login
+    return {
+      success: true,
+      message: "Account created successfully! Redirecting to dashboard...",
+      userData: userData,
+      sessionToken: sessionToken
+    };
+    
+  } catch (error) {
+    console.error("Registration error:", error);
+    return {
+      success: false,
+      error: "register.form.serverError",
+      errorLocale: true
+    };
   }
 }
 
@@ -161,13 +233,13 @@ export async function completeOnboarding(prevState: AuthState | null, formData: 
   await new Promise((resolve) => setTimeout(resolve, 1000))
 
   const email = formData.get("email") as string
-  const companyId = formData.get("companyId") as string
+  const companyName = formData.get("companyName") as string
   const gender = formData.get("gender") as string
   const locale = formData.get("locale") as string || "en"; // Get the current locale
   const { default: prisma } = await import("@/lib/prisma");
 
   // Basic validation
-  if (!email || !companyId || !gender) {
+  if (!email || !companyName || !gender) {
     return {
       success: false,
       error: "login.form.emptyFields",
@@ -175,12 +247,11 @@ export async function completeOnboarding(prevState: AuthState | null, formData: 
     }
   }
 
-  // Validate company ID format
-  const companyIdRegex = /^[a-zA-Z0-9]{3,20}$/
-  if (!companyIdRegex.test(companyId)) {
+  // Validate company name format
+  if (companyName.length < 2 || companyName.length > 100) {
     return {
       success: false,
-      error: "onboarding.error.invalidCompanyId",
+      error: "onboarding.error.invalidCompanyName",
       errorLocale: true
     }
   }
@@ -199,27 +270,56 @@ export async function completeOnboarding(prevState: AuthState | null, formData: 
       };
     }
     
-    // Find company name if exists
-    let companyName = "N/A";
-    if (companyId && !isNaN(parseInt(companyId))) {
-      const company = await prisma.fc_company.findUnique({
-        where: { id: parseInt(companyId) }
+    // Find the company in the database (case insensitive)
+    let companyId = null;
+    let foundCompanyName = "";
+    
+    try {
+      // Check if company exists
+      const existingCompany = await prisma.fc_company.findFirst({
+        where: { 
+          description: { 
+            equals: companyName, 
+            mode: 'insensitive' 
+          } 
+        }
       });
-      if (company) {
-        companyName = company.description;
+      
+      if (existingCompany) {
+        companyId = existingCompany.id;
+        foundCompanyName = existingCompany.description;
+      } else {
+        // Company doesn't exist, return error
+        return {
+          success: false,
+          error: "onboarding.error.companyNotFound",
+          errorLocale: true
+        };
       }
+    } catch (error) {
+      console.error("Error checking company:", error);
+      return {
+        success: false,
+        error: "onboarding.error.serverError",
+        errorLocale: true
+      };
     }
-
-    // Parse company_id to a number if needed
-    const companyIdNum = parseInt(companyId) || null;
+    
+    // Only proceed if we found a valid company
+    if (!companyId) {
+      return {
+        success: false,
+        error: "onboarding.error.companyNotFound",
+        errorLocale: true
+      };
+    }
 
     // Update user with onboarding data
     await prisma.fc_user.update({
       where: { email },
       data: {
-        company_id: companyIdNum,
+        company_id: companyId,
         is_male: gender === 'male'
-        // onboarded field doesn't exist in the schema
       }
     });
 
@@ -229,8 +329,8 @@ export async function completeOnboarding(prevState: AuthState | null, formData: 
       name: user.username,
       email: user.email,
       gender: gender === 'male' ? "Male" : "Female",
-      companyId: companyId,
-      companyName: companyName,
+      companyId: companyId?.toString() || "N/A",
+      companyName: foundCompanyName,
       joinDate: new Date().toISOString().split('T')[0],
     };
 
@@ -269,11 +369,12 @@ export async function handleGoogleAuth(googleProfile: {
       where: { email: googleProfile.email },
     });
     
-    // For company information
+    // For company information and user type
     let userWithCompany = user ? await prisma.fc_user.findUnique({
       where: { email: googleProfile.email },
       include: {
-        fc_company: true
+        fc_company: true,
+        fc_user_type: true
       }
     }) : null;
 
@@ -281,7 +382,7 @@ export async function handleGoogleAuth(googleProfile: {
     const sessionToken = generateSessionToken();
     
     // Prepare user data for client storage
-    const userData = {
+    const userData: any = {
       id: 0, // Will be updated if user exists
       name: googleProfile.name,
       email: googleProfile.email,
@@ -290,6 +391,8 @@ export async function handleGoogleAuth(googleProfile: {
       companyName: "N/A", // Will be updated if company exists
       joinDate: new Date().toISOString().split('T')[0],
       picture: googleProfile.picture || "",
+      userType: 0, // Will be updated if user exists
+      isAdmin: false, // Will be updated if user is admin
     };
 
     if (!user) {
@@ -326,6 +429,30 @@ export async function handleGoogleAuth(googleProfile: {
       // Add company name if available
       if (userWithCompany?.fc_company) {
         userData.companyName = userWithCompany.fc_company.description;
+      }
+      
+      // Add user type information if available
+      // Type 1 = Superadmin, Type 2 = Admin, Type 3 = Employee
+      if (userWithCompany?.fc_user_type) {
+        userData.userType = userWithCompany.fc_user_type.id;
+        userData.userTypeName = userWithCompany.fc_user_type.description || "Employee";
+        userData.isSuperadmin = userWithCompany.fc_user_type.id === 1; // Type 1 is superadmin
+        userData.isAdmin = userWithCompany.fc_user_type.id === 1 || userWithCompany.fc_user_type.id === 2; // Both superadmin and admin have admin privileges
+      } else {
+        // Fallback to direct user_type property if the relationship isn't loaded
+        userData.userType = user.user_type || 3; // Default to employee if not set
+        userData.isSuperadmin = user.user_type === 1;
+        userData.isAdmin = user.user_type === 1 || user.user_type === 2; // Both superadmin and admin have admin privileges
+      }
+      
+      // Double check and ensure proper roles are set
+      const userType = userData.userType;
+      if (userType === 1) {
+        userData.isSuperadmin = true;
+        userData.isAdmin = true;
+      } else if (userType === 2) {
+        userData.isSuperadmin = false;
+        userData.isAdmin = true;
       }
     }
     

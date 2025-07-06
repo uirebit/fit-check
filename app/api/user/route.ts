@@ -32,7 +32,8 @@ export async function GET(request: NextRequest) {
       user = await prisma.fc_user.findUnique({
         where: { email },
         include: {
-          fc_company: true
+          fc_company: true,
+          fc_user_type: true
         }
       });
     } else {
@@ -42,7 +43,8 @@ export async function GET(request: NextRequest) {
           id: 'desc'
         },
         include: {
-          fc_company: true
+          fc_company: true,
+          fc_user_type: true
         }
       });
     }
@@ -54,6 +56,21 @@ export async function GET(request: NextRequest) {
       );
     }
     
+    // Determine user roles based on user_type
+    // Type 1 = Superadmin, Type 2 = Admin, Type 3 = Employee
+    const userType = user.user_type || user.fc_user_type?.id || 3;
+    const isSuperadmin = userType === 1;
+    const isAdmin = userType === 1 || userType === 2; // Both superadmin and admin have admin privileges
+    
+    // Log user info for debugging
+    console.log("API user data:", {
+      email: user.email,
+      userType: userType,
+      userTypeName: user.fc_user_type?.description,
+      isSuperadmin: isSuperadmin,
+      isAdmin: isAdmin
+    });
+    
     // Return user data (excluding sensitive information)
     return NextResponse.json({
       id: user.id,
@@ -62,6 +79,10 @@ export async function GET(request: NextRequest) {
       gender: user.is_male ? "Male" : "Female",
       companyId: user.company_id?.toString() || "N/A",
       companyName: user.fc_company?.description || "N/A",
+      userType: userType,
+      userTypeName: user.fc_user_type?.description || "Employee",
+      isAdmin: isAdmin, // Both superadmin and admin have admin privileges
+      isSuperadmin: isSuperadmin, // Only superadmins can manage companies
       joinDate: user.creation_date?.toISOString().split('T')[0] || new Date().toISOString().split('T')[0],
       picture: "/placeholder-user.jpg" // In a real app, use user.profile_picture
     });
