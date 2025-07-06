@@ -11,7 +11,11 @@ import { Loader2 } from "lucide-react"
 import { useLanguage } from "@/contexts/language-context"
 import { useRouter } from "next/navigation"
 
-export function LoginForm() {
+interface LoginFormProps {
+  onForgotPassword?: () => void;
+}
+
+export function LoginForm({ onForgotPassword }: LoginFormProps) {
   const { t, language } = useLanguage();
   const [state, action, isPending] = useActionState(loginUser, null);
   const router = useRouter();
@@ -94,8 +98,19 @@ export function LoginForm() {
       </Button>
 
       <div className="text-center">
-        <Button variant="link" className="text-sm text-blue-600 hover:text-blue-800">
-          {t("login.form.forgotPassword")}?
+        <Button 
+          variant="link" 
+          className="text-sm text-blue-600 hover:text-blue-800"
+          onClick={(e) => {
+            e.preventDefault();
+            if (onForgotPassword) {
+              onForgotPassword();
+            } else {
+              router.push(`/${language}/forgot-password`);
+            }
+          }}
+        >
+          {t("login.form.forgotPassword")}
         </Button>
       </div>
     </form>

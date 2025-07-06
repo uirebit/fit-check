@@ -149,6 +149,15 @@ const pt = {
     "register.form.verificationEmailSent": "Um email de verificação foi enviado para o seu endereço de email. Por favor verifique sua caixa de entrada e siga as instruções para verificar sua conta.",
     "register.form.verificationEmailError": "Erro ao enviar o email de verificação. Por favor tente novamente mais tarde.",
     "register.form.verificationEmailSubject": "Verifique sua Conta WorkWear Sizes",
+    
+    // Forgot Password
+    "forgotPassword.title": "Esqueci minha Senha",
+    "forgotPassword.description": "Digite seu endereço de email e enviaremos um link para redefinir sua senha.",
+    "forgotPassword.submit": "Enviar Link",
+    "forgotPassword.sending": "Enviando...",
+    "forgotPassword.success": "O link para redefinir sua senha foi enviado para seu email. Por favor verifique sua caixa de entrada.",
+    "forgotPassword.error": "Falha ao enviar o link de redefinição de senha. Por favor tente novamente.",
+    "forgotPassword.backToLogin": "Voltar para o Login",
 
     "signin.back": "Bem-vindo de volta",
     "signin.create": "Criar conta",

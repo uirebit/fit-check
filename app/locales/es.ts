@@ -149,6 +149,15 @@ const es = {
     "register.form.verificationEmailSent": "Se ha enviado un correo de verificación a tu dirección de correo electrónico. Por favor revisa tu bandeja de entrada y sigue las instrucciones para verificar tu cuenta.",
     "register.form.verificationEmailError": "Error al enviar el correo de verificación. Por favor intenta de nuevo más tarde.",
     "register.form.verificationEmailSubject": "Verifica tu Cuenta de WorkWear Sizes",
+    
+    // Forgot Password
+    "forgotPassword.title": "Recuperar Contraseña",
+    "forgotPassword.description": "Ingresa tu correo electrónico y te enviaremos un enlace para restablecer tu contraseña.",
+    "forgotPassword.submit": "Enviar Enlace",
+    "forgotPassword.sending": "Enviando...",
+    "forgotPassword.success": "Se ha enviado un enlace para restablecer tu contraseña. Por favor revisa tu bandeja de entrada.",
+    "forgotPassword.error": "Error al enviar el enlace para restablecer la contraseña. Por favor intenta de nuevo.",
+    "forgotPassword.backToLogin": "Volver a Inicio de Sesión",
 
     "signin.back": "Bienvenido de nuevo",
     "signin.create": "Crear cuenta",

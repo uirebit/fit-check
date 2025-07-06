@@ -6,6 +6,7 @@ import axios from "axios"
 import { LoginForm } from "./login-form"
 import { RegisterForm } from "./register-form"
 import { OnboardingForm } from "./onboarding-form"
+import { ForgotPasswordForm } from "./forgot-password-form"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Separator } from "@/components/ui/separator"
@@ -13,7 +14,7 @@ import { Chrome } from "lucide-react"
 import { handleGoogleAuth } from "@/app/actions/auth"
 import { useLanguage } from "@/contexts/language-context"
 
-type AuthStep = "auth" | "onboarding"
+type AuthStep = "auth" | "onboarding" | "forgot-password"
 
 export function AuthSection() {
   const { t } = useLanguage();
@@ -21,6 +22,15 @@ export function AuthSection() {
   const [authStep, setAuthStep] = useState<AuthStep>("auth")
   const [userEmail, setUserEmail] = useState<string>("")
   const [loading, setLoading] = useState(false)
+  
+  const handleForgotPassword = () => {
+    setAuthStep("forgot-password")
+  }
+  
+  const handleBackToLogin = () => {
+    setAuthStep("auth")
+    setIsLogin(true)
+  }
 
   const googleLogin = useGoogleLogin({
     onSuccess: async (tokenResponse) => {
@@ -129,6 +139,22 @@ export function AuthSection() {
       </Card>
     )
   }
+  
+  if (authStep === "forgot-password") {
+    return (
+      <Card className="w-full max-w-md shadow-xl">
+        <CardHeader className="space-y-1">
+          <CardTitle className="text-2xl font-bold text-center">{t("forgotPassword.title")}</CardTitle>
+          <CardDescription className="text-center">
+            {t("forgotPassword.description")}
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <ForgotPasswordForm onBack={handleBackToLogin} />
+        </CardContent>
+      </Card>
+    )
+  }
 
   return (
     <Card className="w-full max-w-md shadow-xl">
@@ -164,7 +190,7 @@ export function AuthSection() {
           </div>
         </div>
 
-        {isLogin ? <LoginForm /> : <RegisterForm />}
+        {isLogin ? <LoginForm onForgotPassword={handleForgotPassword} /> : <RegisterForm />}
 
         <div className="text-center">
           <Button variant="link" onClick={() => setIsLogin(!isLogin)} className="text-sm">
