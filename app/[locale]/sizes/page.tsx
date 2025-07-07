@@ -159,7 +159,11 @@ export default function SizesPage() {
                 </div>
                 <span className="text-sm font-medium">{userData.name}</span>
               </div>
-              <Button variant="ghost" size="sm">
+              <Button 
+                variant="ghost" 
+                size="sm" 
+                onClick={() => window.location.href = `/${t("locale") || "en"}/settings`}
+              >
                 <Settings className="h-4 w-4 mr-2" />
                 {t("header.settings")}
               </Button>

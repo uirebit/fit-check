@@ -12,6 +12,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { useEffect } from "react"
+import { useAuth } from "@/hooks/use-auth"
 
 interface UserData {
   name: string;
@@ -32,6 +33,8 @@ interface UserData {
 export default function SettingsPage() {
   const { t, language } = useLanguage();
   const router = useRouter();
+  const { user, isAuthenticated, isLoading: authLoading } = useAuth();
+  
   const [userData, setUserData] = useState<UserData>({
     name: "",
     email: "",
@@ -53,10 +56,14 @@ export default function SettingsPage() {
       try {
         setError(null);
         
-        const storedUser = localStorage.getItem("user_data");
-        const token = localStorage.getItem("auth_token") || sessionStorage.getItem("auth_token");
-        
-        if (!token || !storedUser) {
+        // Check if user is authenticated with NextAuth
+        if (!isAuthenticated) {
+          if (authLoading) {
+            // Still loading auth state, wait
+            return;
+          }
+          
+          // Not authenticated, redirect to login
           setError(t("settings.error.notAuthenticated"));
           setTimeout(() => {
             router.push(`/${language}`);
@@ -64,36 +71,22 @@ export default function SettingsPage() {
           return;
         }
         
-        // Load user data from localStorage
-        const userData = JSON.parse(storedUser);
-        setUserData({
-          ...userData,
-          isLoading: false,
-          language: language || userData.language || 'en',
-          gender: userData.gender || 'Male'
-        });
-        
-        // Try to update from API as well for most current data
-        try {
-          const response = await fetch(`/api/user?email=${encodeURIComponent(userData.email)}`, {
-            headers: { Authorization: `Bearer ${token}` },
-            credentials: 'include'
+        // User is authenticated, set data from NextAuth session
+        if (user) {
+          setUserData({
+            name: user.name || "",
+            email: user.email || "",
+            companyId: user.companyId || "",
+            companyName: user.companyName || "",
+            gender: user.gender || "Male",
+            joinDate: "",  // This might not be in the NextAuth session
+            isLoading: false,
+            language: language || 'en',
+            userType: user.userType,
+            userTypeName: user.userType === 1 ? "Superadmin" : user.userType === 2 ? "Admin" : "Employee",
+            isAdmin: user.isAdmin || false,
+            isSuperadmin: user.isSuperadmin || false
           });
-          
-          if (response.ok) {
-            const apiUserData = await response.json();
-            setUserData({
-              ...apiUserData,
-              isLoading: false,
-              language: language || userData.language || 'en'
-            });
-            
-            // Update localStorage with current data
-            localStorage.setItem("user_data", JSON.stringify(apiUserData));
-          }
-        } catch (apiError) {
-          console.error("Could not update user data from API:", apiError);
-          // Continue with localStorage data
         }
       } catch (error) {
         console.error("Failed to load user settings", error);
@@ -102,7 +95,7 @@ export default function SettingsPage() {
     }
     
     loadUserData();
-  }, [router, language, t]);
+  }, [router, language, t, user, isAuthenticated, authLoading]);
   
   const handleSaveProfile = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -111,14 +104,19 @@ export default function SettingsPage() {
     setSuccessMessage(null);
     
     try {
-      // Simulate API call for saving profile
+      // In a real implementation, you would call an API endpoint to update the user profile
+      // TODO: Implement server action to update user profile in database
       await new Promise(resolve => setTimeout(resolve, 1000));
       
-      // In a real implementation, you would call an API endpoint to update the user profile
-      // For now, we'll just update the local storage
-      localStorage.setItem("user_data", JSON.stringify(userData));
+      // For now, we just show success message
+      // Note: User's session is managed by NextAuth, so we don't need to update localStorage
       
       setSuccessMessage(t("settings.success.profileUpdated"));
+      
+      // Force refresh of the session in case we implement the update functionality
+      // This would refresh the NextAuth session with new user data
+      window.location.reload();
+      
     } catch (error) {
       console.error("Failed to save profile:", error);
       setError(t("settings.error.saveFailed"));
@@ -131,13 +129,8 @@ export default function SettingsPage() {
     // Update user data with new language
     setUserData({...userData, language: newLanguage});
     
-    // Update language preference in user data
-    const storedUser = localStorage.getItem("user_data");
-    if (storedUser) {
-      const updatedUserData = JSON.parse(storedUser);
-      updatedUserData.language = newLanguage;
-      localStorage.setItem("user_data", JSON.stringify(updatedUserData));
-    }
+    // Set language cookie for the app
+    document.cookie = `NEXT_LOCALE=${newLanguage}; path=/; max-age=${60*60*24*365}`;
     
     // Navigate to the same page but with new language path
     router.push(`/${newLanguage}/settings`);
