@@ -1,15 +1,14 @@
 "use client"
 
-import { useActionState } from "react"
-import { useEffect } from "react"
+import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Alert, AlertDescription } from "@/components/ui/alert"
-import { loginUser } from "@/app/actions/auth"
 import { Loader2 } from "lucide-react"
 import { useLanguage } from "@/contexts/language-context"
 import { useRouter } from "next/navigation"
+import { signIn } from "next-auth/react"
 
 interface LoginFormProps {
   onForgotPassword?: () => void;
@@ -17,49 +16,56 @@ interface LoginFormProps {
 
 export function LoginForm({ onForgotPassword }: LoginFormProps) {
   const { t, language } = useLanguage();
-  const [state, action, isPending] = useActionState(loginUser, null);
   const router = useRouter();
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [success, setSuccess] = useState(false);
 
-  // Handle successful login
-  useEffect(() => {
-    async function handleSuccessfulLogin() {
-      if (state?.success && state?.userData) {
-        // Store user data in localStorage
-        localStorage.setItem("user_data", JSON.stringify(state.userData));
+  // Función para manejar el envío del formulario con NextAuth
+  async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    setIsLoading(true);
+    setError(null);
+    
+    // Obtener los datos del formulario
+    const formData = new FormData(e.currentTarget);
+    const email = formData.get("email") as string;
+    const password = formData.get("password") as string;
+    
+    try {
+      // Usar NextAuth para iniciar sesión
+      const result = await signIn("credentials", {
+        redirect: false,
+        email,
+        password
+      });
+      
+      if (result?.error) {
+        // Mostrar error de autenticación
+        setError(t("login.form.invalidCredentials"));
+      } else if (result?.ok) {
+        // Éxito: mostrar mensaje de éxito y preparar redirección
+        setSuccess(true);
         
-        // Store session token
-        if (state.sessionToken) {
-          localStorage.setItem("auth_token", state.sessionToken);
-          localStorage.setItem("user_session", "active");
-          
-          // Set cookies for server-side auth
-          try {
-            await fetch('/api/auth/cookie', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ token: state.sessionToken, session: 'active' })
-            });
-          } catch (cookieError) {
-            console.error("Failed to set auth cookies", cookieError);
-          }
-        }
-
-        // Redirect to dashboard after a short delay
+        // Redirigir al dashboard después de un breve retraso
         setTimeout(() => {
           router.push(`/${language}/dashboard`);
         }, 1000);
       }
+    } catch (error) {
+      console.error("Error de inicio de sesión:", error);
+      setError(t("login.form.serverError"));
+    } finally {
+      setIsLoading(false);
     }
-    
-    handleSuccessfulLogin();
-  }, [state, router, language]);
+  }
 
   return (
-    <form action={action} className="space-y-4">
+    <form onSubmit={handleSubmit} className="space-y-4">
       <input type="hidden" name="locale" value={language} />
       <div className="space-y-2">
         <Label htmlFor="email">{t("login.form.email")}</Label>
-        <Input id="email" name="email" type="email" placeholder={t("login.form.placeholderemail")} required disabled={isPending} />
+        <Input id="email" name="email" type="email" placeholder={t("login.form.placeholderemail")} required disabled={isLoading} />
       </div>
 
       <div className="space-y-2">
@@ -70,24 +76,24 @@ export function LoginForm({ onForgotPassword }: LoginFormProps) {
           type="password"
           placeholder= {t("login.form.placeholderpassword")}
           required
-          disabled={isPending}
+          disabled={isLoading}
         />
       </div>
 
-      {state?.error && (
+      {error && (
         <Alert variant="destructive">
-          <AlertDescription>{state.errorLocale ? t(state.error) : state.error}</AlertDescription>
+          <AlertDescription>{error}</AlertDescription>
         </Alert>
       )}
 
-      {state?.success && (
+      {success && (
         <Alert>
-          <AlertDescription className="text-green-600">{state.message}</AlertDescription>
+          <AlertDescription className="text-green-600">{t("login.form.loginSuccess")}</AlertDescription>
         </Alert>
       )}
 
-      <Button type="submit" className="w-full" disabled={isPending}>
-        {isPending ? (
+      <Button type="submit" className="w-full" disabled={isLoading}>
+        {isLoading ? (
           <>
             <Loader2 className="mr-2 h-4 w-4 animate-spin" />
               {t("login.form.signingin")}

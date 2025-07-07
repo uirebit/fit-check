@@ -11,6 +11,7 @@ import { Loader2, User, Building } from "lucide-react"
 import { useLanguage } from "@/contexts/language-context"
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { useRouter } from "next/navigation"
+import { signIn } from "next-auth/react"
 
 export function RegisterForm() {
   const { t, language } = useLanguage();
@@ -45,34 +46,32 @@ export function RegisterForm() {
   // Handle successful registration
   useEffect(() => {
     async function handleSuccessfulRegister() {
-      if (state?.success && state?.userData && state?.sessionToken) {
-        // Store user data in localStorage
-        localStorage.setItem("user_data", JSON.stringify(state.userData));
-        
-        // Store session token
-        localStorage.setItem("auth_token", state.sessionToken);
-        localStorage.setItem("user_session", "active");
-        
-        // Set cookies for server-side auth
+      if (state?.success && state?.userData) {
         try {
-          await fetch('/api/auth/cookie', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ token: state.sessionToken, session: 'active' })
+          // Usar los valores del formulario para iniciar sesión automáticamente con NextAuth
+          const result = await signIn("credentials", {
+            redirect: false,
+            email: formData.email,
+            password: document.getElementById("password") ? 
+              (document.getElementById("password") as HTMLInputElement).value : ""
           });
-        } catch (cookieError) {
-          console.error("Failed to set auth cookies", cookieError);
+          
+          if (result?.error) {
+            console.error("Auto-login failed after registration:", result.error);
+          }
+          
+          // Redirect to dashboard after a short delay
+          setTimeout(() => {
+            router.push(`/${language}/dashboard`);
+          }, 1000);
+        } catch (loginError) {
+          console.error("Failed to auto-login after registration:", loginError);
         }
-
-        // Redirect to dashboard after a short delay
-        setTimeout(() => {
-          router.push(`/${language}/dashboard`);
-        }, 1000);
       }
     }
     
     handleSuccessfulRegister();
-  }, [state, router, language]);
+  }, [state, router, language, formData.email]);
 
   return (
     <form action={action} className="space-y-4">

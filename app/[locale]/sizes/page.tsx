@@ -12,6 +12,8 @@ import { getCompanyClothingItems, ClothingItem } from "@/app/actions/clothing"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { Separator } from "@/components/ui/separator"
 import { useLanguage } from "@/contexts/language-context"
+import { useAuth } from "@/hooks/use-auth"
+import { signOut } from "@/auth"
 
 // Using translation keys directly in error states
 
@@ -24,32 +26,15 @@ export default function SizesPage() {
   const { t } = useLanguage() // Get translations
   
   
-  // User data from localStorage
-  const [userData, setUserData] = useState({
-    name: "",
-    email: "",
-    gender: "male" as "male" | "female",
-  })
+  // Get user data from NextAuth session
+  const { user, isLoading: authLoading, isAuthenticated } = useAuth()
   
-  // Get user data from localStorage
-  useEffect(() => {
-    if (typeof window !== "undefined") {
-      try {
-        // Get user data from localStorage
-        const storedUser = localStorage.getItem("user_data");
-        if (storedUser) {
-          const parsedUser = JSON.parse(storedUser);
-          setUserData({
-            name: parsedUser.name || "",
-            email: parsedUser.email || "",
-            gender: parsedUser.is_male ? "male" : "female",
-          });
-        }
-      } catch (err) {
-        console.error("Error getting user data from localStorage:", err);
-      }
-    }
-  }, []);
+  // Map user data from session
+  const userData = {
+    name: user?.name || "",
+    email: user?.email || "",
+    gender: (user?.gender === "Male" ? "male" : "female") as "male" | "female",
+  }
   
   // Load clothing items from the database
   useEffect(() => {
@@ -57,26 +42,8 @@ export default function SizesPage() {
       try {
         setLoading(true)
         
-        // Get user email from localStorage
-        let userEmail = userData.email;
-        
-        // If userData doesn't have email yet, try to get it directly from localStorage
-        if (!userEmail && typeof window !== "undefined") {
-          const storedUser = localStorage.getItem("user_data");
-          if (storedUser) {
-            const parsedUser = JSON.parse(storedUser);
-            userEmail = parsedUser.email;
-          }
-        }
-        
-        if (!userEmail) {
-          setError("error.notAuthenticated");
-          setLoading(false);
-          return;
-        }
-        
-        // Pass the email to the server action
-        const items = await getCompanyClothingItems(userEmail);
+        // Get items from server action (now using NextAuth for auth)
+        const items = await getCompanyClothingItems();
         
         if (items.length > 0) {
           setClothingTypes(items);
@@ -92,12 +59,19 @@ export default function SizesPage() {
       }
     }
     
-    loadClothingItems()
-  }, [userData.email])
+    // Only load items if authentication is complete
+    if (!authLoading) {
+      loadClothingItems()
+    }
+  }, [authLoading, isAuthenticated])
 
-  // Clear form when clothing type changes
+  // Handle clothing type change with debounce to prevent multiple rapid changes
   const handleClothingChange = (value: string) => {
-    setSelectedClothing(value)
+    // Only update if the value is different to prevent unnecessary re-renders
+    if (value !== selectedClothing) {
+      console.log(`Changing clothing type to: ${value}`);
+      setSelectedClothing(value);
+    }
   }
   
   // Sort clothing items by category and then by name
@@ -153,12 +127,15 @@ export default function SizesPage() {
     );
   };
 
-  const handleSignOut = () => {
-    // In a real app, you would:
-    // 1. Clear session/JWT tokens
-    // 2. Clear localStorage/sessionStorage
-    // 3. Redirect to login page
-    window.location.href = "/"
+  const handleSignOut = async () => {
+    try {
+      // Use NextAuth to sign out
+      await signOut({ redirectTo: '/' });
+    } catch (error) {
+      console.error("Sign out error:", error);
+      // Fallback to simple redirect
+      window.location.href = "/";
+    }
   }
 
   return (
@@ -196,7 +173,27 @@ export default function SizesPage() {
       </header>
 
       <main className="container mx-auto px-4 py-8">
-        {showSaved ? (
+        {authLoading ? (
+          <div className="flex items-center justify-center p-8">
+            <div className="h-6 w-6 animate-spin rounded-full border-b-2 border-blue-600"></div>
+            <span className="ml-2 text-sm text-gray-600">{t("loading.authenticating")}</span>
+          </div>
+        ) : !isAuthenticated ? (
+          <Alert variant="destructive" className="mb-8">
+            <AlertCircle className="h-4 w-4" />
+            <AlertTitle>{t("error.title")}</AlertTitle>
+            <AlertDescription>
+              {t("error.notAuthenticated")}
+              <Button 
+                variant="link" 
+                className="px-0 py-0 ml-1 h-auto"
+                onClick={() => window.location.href = `/${t("locale") || "en"}/login`}
+              >
+                {t("login.goToLogin")}
+              </Button>
+            </AlertDescription>
+          </Alert>
+        ) : showSaved ? (
           <SavedSizes />
         ) : (
           <>

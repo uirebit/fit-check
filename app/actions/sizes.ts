@@ -57,46 +57,34 @@ export async function saveMeasurement(prevState: SizeState | null, formData: For
     
     // Save to the database
     try {
+      // Primero intentamos obtener la sesión de NextAuth (será implementado en el futuro)
       const { default: prisma } = await import("@/lib/prisma");
       
-      // Get user email using server-side methods
+      // Obtener el email del usuario exclusivamente de la sesión NextAuth
       let userEmail = "";
       
-      // Get user email from formData directly
-      // This should be passed from client component
-      userEmail = formData.get("userEmail") as string;
-      
-      console.log("User email from form data:", userEmail);
-
-      // If no email found, try to get from headers (requires client to pass in cookie data)
-      if (!userEmail) {
-        try {
-          // In Next.js server actions, we can't directly access cookies like in API routes
-          // Instead, we rely on client passing this info in form data
-          
-          // For auth check only - not retrieving actual email 
-          const hasAuth = formData.get("hasAuth") === "true";
-          
-          if (hasAuth) {
-            console.log("Client reported auth, but no email provided");
-          }
-        } catch (cookieError) {
-          console.error("Error checking auth state:", cookieError);
+      try {
+        // Obtener la sesión de NextAuth
+        const authFile = await import("@/auth");
+        
+        // Obtener la sesión actual
+        const session = await authFile.auth();
+        
+        if (session && session.user?.email) {
+          userEmail = session.user.email;
+          console.log("Found user email in NextAuth session:", userEmail);
+        } else {
+          console.error("No user email found in NextAuth session");
+          return {
+            success: false,
+            error: "User not authenticated. Please log in again."
+          };
         }
-      }
-      
-      // For development/testing purposes only, use a hardcoded email if needed
-      // IMPORTANT: Remove this in production!
-      if (!userEmail && process.env.NODE_ENV === 'development') {
-        userEmail = "test@example.com"; // Only for development/testing!
-        console.log("Using test email for development:", userEmail);
-      }
-      
-      if (!userEmail) {
-        console.error("No user email found in any source - cannot save measurements");
+      } catch (authError) {
+        console.error("Error accessing NextAuth session:", authError);
         return {
           success: false,
-          error: "User not authenticated. Please log in again."
+          error: "Authentication error. Please log in again."
         };
       }
       
@@ -263,23 +251,25 @@ export async function saveMeasurement(prevState: SizeState | null, formData: For
   }
 }
 
-export async function getSavedSizes(userEmail?: string): Promise<SavedSize[]> {
+export async function getSavedSizes(): Promise<SavedSize[]> {
   try {
-    // Get user email from parameter or fallback methods
-    if (!userEmail) {
-      console.log("No user email provided to getSavedSizes, trying fallback");
-
-      // For development/testing purposes only, use a hardcoded email if needed
-      if (process.env.NODE_ENV === 'development') {
-        userEmail = "test@example.com"; // Only for development/testing!
-        console.log("Using test email for development:", userEmail);
-      }
-    } else {
-      console.log("Using provided user email:", userEmail);
-    }
+    // Obtener el email exclusivamente de la sesión de NextAuth
+    let userEmail = "";
     
-    if (!userEmail) {
-      console.warn("No user email found in any source");
+    try {
+      // Import auth from the root auth.ts file
+      const authFile = await import("@/auth");
+      const session = await authFile.auth();
+      
+      if (session?.user?.email) {
+        userEmail = session.user.email;
+        console.log("Found user email in NextAuth session:", userEmail);
+      } else {
+        console.warn("No user email found in NextAuth session");
+        return [];
+      }
+    } catch (authError) {
+      console.error("Error accessing NextAuth session:", authError);
       return [];
     }
     
@@ -334,6 +324,7 @@ export async function getSavedSizes(userEmail?: string): Promise<SavedSize[]> {
         id: measurement.id.toString(),
         clothingType: measurement.cloth_id.toString(),
         clothingName: measurement.fc_cloth.description || 'Unknown',
+        // Asegúrate de que clothingName sea la clave para las traducciones
         measurements: measurementsObj,
         calculatedSize: measurement.calculated_size || '',
         savedAt: measurement.created_at?.toISOString() || new Date().toISOString()

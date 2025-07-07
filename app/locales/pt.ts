@@ -148,7 +148,9 @@ const pt = {
     // Saved sizes
     "saved.title": "Seus Tamanhos Salvos",
     "saved.subtitle":
-      "Gerencie as informações de tamanho da sua roupa de trabalho. Você tem {count} tamanho{plural} salvo{plural}.",
+      "Gerencie as informações de tamanho da sua roupa de trabalho. Você tem {count} tamanho salvo.",
+    "saved.subtitlePlural":
+      "Gerencie as informações de tamanho da sua roupa de trabalho. Você tem {count} tamanhos salvos.",
     "saved.noSizes":
       "Você ainda não salvou nenhum tamanho de roupa. Comece selecionando um tipo de roupa e digitando suas medidas.",
     "saved.measurements": "Medidas:",

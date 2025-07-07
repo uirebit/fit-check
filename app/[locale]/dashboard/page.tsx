@@ -9,6 +9,8 @@ import { Alert, AlertDescription } from "@/components/ui/alert"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { useLanguage } from "@/contexts/language-context"
+import { useAuth } from "@/hooks/use-auth"
+import { signOut } from "@/auth"
 
 interface UserData {
   name: string;
@@ -42,183 +44,50 @@ export default function DashboardPage() {
 
   const { language } = useLanguage();
   
+  // Get authentication state from NextAuth
+  const { user, isAuthenticated, isLoading: authLoading } = useAuth();
+  
   // Load user data on component mount
   useEffect(() => {
-    async function loadUserData() {
-      try {
-        setError(null); // Clear any previous errors
-        
-        // Check for authenticated session
-        let isAuthenticated = false;
-        
-        // First check localStorage
-        const storedSession = localStorage.getItem("user_session");
-        const storedUser = localStorage.getItem("user_data");
-        const token = localStorage.getItem("auth_token") || sessionStorage.getItem("auth_token");
-        
-        if (storedSession || token) {
-          isAuthenticated = true;
-        }
-        
-        if (storedUser) {
-          // If we have user data in localStorage, use it
-          const userData = JSON.parse(storedUser);
-          
-          // Ensure user roles are correctly set based on userType
-          const userType = userData.userType || 3; // Default to employee (3) if not set
-          const isSuperadmin = userData.isSuperadmin === true || userType === 1;
-          const isAdmin = userData.isAdmin === true || userType === 1 || userType === 2;
-          
-          // Log user data for debugging
-          console.log("User data from localStorage:", {
-            userType: userType,
-            userTypeName: userData.userTypeName,
-            isAdmin: isAdmin,
-            isSuperadmin: isSuperadmin
-          });
-          
-          setUserData({
-            ...userData,
-            isLoading: false,
-            language: language,
-            userType: userType,
-            isAdmin: isAdmin, // Both superadmin and admin have admin privileges
-            isSuperadmin: isSuperadmin, // Only superadmin (type 1) can manage companies
-            gender: userData.gender ? 
-              t(`onboarding.gender${userData.gender.charAt(0).toUpperCase() + userData.gender.slice(1)}`) : 
-              t("onboarding.genderMale")
-          });
-          return;
-        }
-        
-        // If we have auth but no user data, try to fetch from API
-        if (isAuthenticated) {
-          try {
-            // Try to get email from localStorage for more accurate user data
-            let email = '';
-            try {
-              const sessionData = localStorage.getItem('user_data');
-              if (sessionData) {
-                const parsedData = JSON.parse(sessionData);
-                if (parsedData && parsedData.email) {
-                  email = parsedData.email;
-                }
-              }
-            } catch (e) {
-              console.error("Failed to parse local storage data:", e);
-            }
-            
-            // Attempt to fetch user data from API
-            const url = email ? `/api/user?email=${encodeURIComponent(email)}` : '/api/user';
-            const response = await fetch(url, {
-              headers: { Authorization: token ? `Bearer ${token}` : '' },
-              credentials: 'include'
-            }).catch(error => {
-              console.error("API fetch failed:", error);
-              // If fetch fails, redirect to login
-              throw new Error("Unable to fetch user data");
-            });
-            
-            if (response.ok) {
-              const userData = await response.json();
-              
-              // Ensure user roles are correctly set based on userType
-              const userType = userData.userType || 3; // Default to employee (3) if not set
-              const isSuperadmin = userData.isSuperadmin === true || userType === 1;
-              const isAdmin = userData.isAdmin === true || userType === 1 || userType === 2;
-              
-              // Log API response data for debugging
-              console.log("User data from API:", {
-                userType: userType,
-                userTypeName: userData.userTypeName,
-                isAdmin: isAdmin,
-                isSuperadmin: isSuperadmin,
-                companyId: userData.companyId,
-                companyName: userData.companyName
-              });
-              
-              const updatedUserData = {
-                ...userData,
-                userType: userType,
-                isAdmin: isAdmin, // Both superadmin and admin have admin privileges
-                isSuperadmin: isSuperadmin // Only superadmin (type 1) can manage companies
-              };
-              
-              setUserData({
-                ...updatedUserData,
-                isLoading: false,
-                language: language,
-                gender: userData.gender ? 
-                  t(`onboarding.gender${userData.gender.charAt(0).toUpperCase() + userData.gender.slice(1)}`) : 
-                  t("onboarding.genderMale")
-              });
-              
-              // Store in localStorage for future use
-              localStorage.setItem("user_data", JSON.stringify(updatedUserData));
-              return;
-            } else {
-              // If API returns error status, redirect to login
-              throw new Error("Authentication failed");
-            }
-          } catch (fetchError) {
-            console.error("Error fetching user data:", fetchError);
-            setError("Unable to retrieve user data. Please login again.");
-            
-            // Clear invalid auth data
-            localStorage.removeItem("user_session");
-            localStorage.removeItem("user_data");
-            localStorage.removeItem("auth_token");
-            
-            // Redirect to login page
-            setTimeout(() => {
-              router.push(`/${language}`);
-            }, 2000);
-          }
-        } else {
-          // No auth found, redirect to login
-          setError("No authentication found. Please log in.");
-          setTimeout(() => {
-            router.push(`/${language}`);
-          }, 2000);
-        }
-      } catch (error) {
-        console.error("Failed to load user data", error);
-        setError("Failed to load user data. Please try again.");
-        
-        // Redirect to login page if authentication fails
-        setTimeout(() => {
-          router.push(`/${language}`);
-        }, 2000);
-      }
+    if (authLoading) {
+      // Still loading auth state
+      return;
     }
     
-    loadUserData();
-  }, [router, t, language]);
+    if (!isAuthenticated || !user) {
+      setError("error.notAuthenticated");
+      return;
+    }
+    
+    setError(null); // Clear any previous errors
+    
+    // User is authenticated via NextAuth, use the session data
+    const userType = user.userType || 3; // Default to employee (3) if not set
+    const isSuperadmin = user.isSuperadmin === true || userType === 1;
+    const isAdmin = user.isAdmin === true || userType === 2;
+    
+    setUserData({
+      name: user.name || "",
+      email: user.email || "",
+      companyId: user.companyId || "",
+      companyName: user.companyName || "",
+      gender: user.gender ? 
+        t(`onboarding.gender${user.gender.charAt(0).toUpperCase() + user.gender.slice(1)}`) : 
+        t("onboarding.genderMale"),
+      joinDate: new Date().toISOString().split('T')[0],
+      isLoading: false,
+      language: language,
+      userType: userType,
+      userTypeName: userType === 1 ? "Superadmin" : userType === 2 ? "Admin" : "Employee",
+      isAdmin: isAdmin,
+      isSuperadmin: isSuperadmin
+    });
+  }, [user, isAuthenticated, authLoading, t, language]);
 
   const handleSignOut = async () => {
     try {
-      // Try to call logout API endpoint (if it exists)
-      try {
-        await fetch('/api/auth/logout', { 
-          method: 'POST',
-          credentials: 'include'
-        });
-      } catch (apiError) {
-        console.error("API logout failed, continuing with local logout", apiError);
-        // Continue with local logout even if API call fails
-      }
-      
-      // Clear local storage and session storage
-      localStorage.removeItem("user_session");
-      localStorage.removeItem("user_data");
-      localStorage.removeItem("auth_token");
-      sessionStorage.removeItem("user_token");
-      sessionStorage.removeItem("auth_token");
-      
-      // Remove common authentication cookies
-      document.cookie = "auth_token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
-      document.cookie = "session=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
-      document.cookie = "user_session=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
+      // Use NextAuth's signOut function
+      await signOut({ redirect: false });
       
       // Redirect to home/login page with current language
       router.push(`/${language}`);

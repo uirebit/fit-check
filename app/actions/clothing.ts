@@ -28,35 +28,58 @@ export interface SavedMeasurement {
 
 export async function getClothingMeasureMappings(clothingId: string): Promise<ClothingMeasureMapping[]> {
   try {
+    console.log(`Fetching measure mappings for clothing ID: ${clothingId}`);
+    
+    // Validate clothingId
+    if (!clothingId) {
+      console.error("Invalid clothing ID provided");
+      return [];
+    }
+    
     const { default: prisma } = await import("@/lib/prisma");
+    
+    // Parse clothingId once to avoid multiple conversions
+    const parsedClothingId = parseInt(clothingId, 10);
+    
+    if (isNaN(parsedClothingId)) {
+      console.error("Invalid clothing ID format, must be a number:", clothingId);
+      return [];
+    }
     
     // Get measure mappings for a specific clothing item
     const mappings = await prisma.fc_cloth_measure_mapping.findMany({
       where: {
-        cloth_id: parseInt(clothingId, 10)
+        cloth_id: parsedClothingId
       },
       orderBy: {
         measure_number: 'asc'
       }
     });
     
+    console.log(`Found ${mappings.length} measure mappings for clothing ID: ${clothingId}`);
+    
     return mappings as ClothingMeasureMapping[];
   } catch (error) {
-    console.error("Error fetching clothing measure mappings:", error);
+    console.error(`Error fetching clothing measure mappings for ID ${clothingId}:`, error);
     return [];
   }
 }
 
-export async function getCompanyClothingItems(userEmail?: string): Promise<ClothingItem[]> {
+export async function getCompanyClothingItems(): Promise<ClothingItem[]> {
   try {
     const { default: prisma } = await import("@/lib/prisma");
+    const { auth } = await import("@/auth");
     
-    // If no email was provided, return empty array
-    // The email will be passed from the client component that accesses localStorage
-    if (!userEmail) {
-      console.log("No user email provided");
+    // Get the authenticated session
+    const session = await auth();
+    
+    // If no session or email, return empty array
+    if (!session || !session.user?.email) {
+      console.log("No authenticated session found");
       return [];
     }
+    
+    const userEmail = session.user.email;
     
     // Get user info including company ID from database
     const user = await prisma.fc_user.findFirst({
@@ -111,9 +134,22 @@ export async function getCompanyClothingItems(userEmail?: string): Promise<Cloth
   }
 }
 
-export async function getUserMeasurements(userEmail: string, clothingId: string): Promise<SavedMeasurement | null> {
+export async function getUserMeasurements(clothingId: string): Promise<SavedMeasurement | null> {
   try {
+    console.log(`Fetching measurements for clothing ID: ${clothingId}`);
     const { default: prisma } = await import("@/lib/prisma");
+    const { auth } = await import("@/auth");
+    
+    // Get the authenticated session
+    const session = await auth();
+    
+    // If no session or email, return null
+    if (!session || !session.user?.email) {
+      console.log("No authenticated session found");
+      return null;
+    }
+    
+    const userEmail = session.user.email;
     
     // Get user ID
     const user = await prisma.fc_user.findUnique({
@@ -125,11 +161,14 @@ export async function getUserMeasurements(userEmail: string, clothingId: string)
       return null;
     }
     
+    // Parse clothing ID once to avoid multiple conversions
+    const parsedClothingId = parseInt(clothingId, 10);
+    
     // Get the latest measurement for this clothing type
     const measurement = await prisma.fc_cloth_measurements.findFirst({
       where: {
         user_id: user.id,
-        cloth_id: parseInt(clothingId, 10)
+        cloth_id: parsedClothingId
       },
       orderBy: {
         created_at: 'desc'
@@ -140,25 +179,34 @@ export async function getUserMeasurements(userEmail: string, clothingId: string)
     });
     
     if (!measurement) {
+      console.log(`No saved measurements found for clothing ID: ${clothingId}`);
       return null;
     }
     
     // Get the mappings to know which measure_key corresponds to each measure_number
     const mappings = await prisma.fc_cloth_measure_mapping.findMany({
       where: {
-        cloth_id: parseInt(clothingId, 10)
+        cloth_id: parsedClothingId
       }
+    });
+    
+    // Create a map for faster lookups instead of using find() in a loop
+    const mappingMap = new Map();
+    mappings.forEach(mapping => {
+      mappingMap.set(mapping.measure_number, mapping.measure_key);
     });
     
     // Combine measurement values with their corresponding keys
     const values = measurement.fc_cloth_measurement_value.map(value => {
-      const mapping = mappings.find(m => m.measure_number === value.measure_number);
+      const measureKey = mappingMap.get(value.measure_number) || `measure_${value.measure_number}`;
       return {
         measure_number: value.measure_number,
-        measure_key: mapping?.measure_key || `measure_${value.measure_number}`,
+        measure_key: measureKey,
         measure_value: value.measure_value || 0
       };
     });
+    
+    console.log(`Found ${values.length} measurement values for clothing ID: ${clothingId}`);
     
     return {
       id: measurement.id,

@@ -1,8 +1,6 @@
 "use client"
 
 import { useState } from "react"
-import { useGoogleLogin } from "@react-oauth/google"
-import axios from "axios"
 import { LoginForm } from "./login-form"
 import { RegisterForm } from "./register-form"
 import { OnboardingForm } from "./onboarding-form"
@@ -11,8 +9,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button"
 import { Separator } from "@/components/ui/separator"
 import { Chrome } from "lucide-react"
-import { handleGoogleAuth } from "@/app/actions/auth"
 import { useLanguage } from "@/contexts/language-context"
+import { signIn } from "next-auth/react"
 
 type AuthStep = "auth" | "onboarding" | "forgot-password"
 
@@ -32,102 +30,58 @@ export function AuthSection() {
     setIsLogin(true)
   }
 
-  const googleLogin = useGoogleLogin({
-    onSuccess: async (tokenResponse) => {
-      setLoading(true)
-      try {
-        // Fetch user profile from Google
-        const { data: googleProfile } = await axios.get(
-          "https://www.googleapis.com/oauth2/v3/userinfo",
-          { headers: { Authorization: `Bearer ${tokenResponse.access_token}` } }
-        )
+  // Google login handler that uses NextAuth directly
+  const handleGoogleSignIn = () => {
+    try {
+      setLoading(true);
+      
+      // Get current language for redirection
+      const pathParts = window.location.pathname.split('/');
+      const language = pathParts.length > 1 ? pathParts[1] : 'en';
+      
+      // For Google OAuth, we need to redirect to their auth page
+      // We use the callbackUrl to tell NextAuth where to go after successful auth
+      signIn("google", { 
+        callbackUrl: `/${language}/dashboard`
+      });
+      
+      // Note: No need for error handling here since Google login
+      // will redirect away from this page entirely
+    } catch (error) {
+      console.error("Google sign-in error:", error);
+      alert("Google sign-in failed. Please try again.");
+      setLoading(false);
+    }
+  };
 
-        // Call your server action
-        const result = await handleGoogleAuth({
-          id: googleProfile.sub,
-          email: googleProfile.email,
-          name: googleProfile.name,
-          picture: googleProfile.picture,
-          verified_email: googleProfile.email_verified,
-        })
-
-        if (result.success === false && result.error) {
-          alert(result.error)
-        } else if (result.requiresOnboarding) {
-          // Store the partial user data and session token for onboarding
-          if (result.userData) {
-            localStorage.setItem("user_data", JSON.stringify(result.userData));
-          }
-          
-          if (result.sessionToken) {
-            localStorage.setItem("auth_token", result.sessionToken);
-            localStorage.setItem("user_session", "active");
-            
-            // Set cookies for server-side auth
-            try {
-              await fetch('/api/auth/cookie', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ token: result.sessionToken, session: 'active' })
-              });
-            } catch (cookieError) {
-              console.error("Failed to set auth cookies", cookieError);
-            }
-          }
-          
-          setUserEmail(googleProfile.email)
-          setAuthStep("onboarding")
-        } else if (result.redirect) {
-          // Store the user data and session token before redirecting
-          if (result.userData) {
-            // Ensure admin status is correctly set in localStorage
-            const userData = {
-              ...result.userData,
-              // Make sure isAdmin is explicitly set as a boolean
-              isAdmin: result.userData.isAdmin === true || result.userData.userType === 1
-            };
-            localStorage.setItem("user_data", JSON.stringify(userData));
-          }
-          
-          if (result.sessionToken) {
-            localStorage.setItem("auth_token", result.sessionToken);
-            localStorage.setItem("user_session", "active");
-            
-            // Set cookies for server-side auth
-            try {
-              await fetch('/api/auth/cookie', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ token: result.sessionToken, session: 'active' })
-              });
-            } catch (cookieError) {
-              console.error("Failed to set auth cookies", cookieError);
-            }
-          }
-          
-          // Redirect to dashboard with the current language
-          const pathParts = window.location.pathname.split('/');
-          const language = pathParts.length > 1 ? pathParts[1] : 'en';
-          window.location.href = `/${language}/dashboard`;
-        }
-      } catch (err) {
-        alert("Google sign-in failed.")
-      } finally {
-        setLoading(false)
-      }
-    },
-    onError: () => {
-      alert("Google sign-in failed.")
-      setLoading(false)
-    },
-  })
-
-  const handleOnboardingComplete = () => {
-    setAuthStep("auth")
+  const handleOnboardingComplete = async () => {
     // Get current language from pathname
     const pathParts = window.location.pathname.split('/');
     const language = pathParts.length > 1 ? pathParts[1] : 'en';
-    window.location.href = `/${language}/dashboard`
+    const redirectUrl = `/${language}/dashboard`;
+    
+    try {
+      // Use credentials provider without direct redirect to avoid header errors
+      const signInResult = await signIn("credentials", {
+        email: userEmail,
+        password: `google-oauth2-${Date.now()}`, // Special format to indicate Google auth
+        redirect: false
+      });
+      
+      if (signInResult?.error) {
+        console.error("Authentication error:", signInResult.error);
+        alert(signInResult.error || "Authentication failed");
+      } else {
+        // Manual navigation after successful sign-in
+        window.location.href = redirectUrl;
+      }
+    } catch (error) {
+      console.error("Failed to sign in after onboarding:", error);
+      // Fallback to manual navigation
+      window.location.href = redirectUrl;
+    }
+    
+    setAuthStep("auth");
   }
 
   if (authStep === "onboarding") {
@@ -140,7 +94,7 @@ export function AuthSection() {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <OnboardingForm userEmail={userEmail} onComplete={handleOnboardingComplete} />
+          <OnboardingForm onComplete={handleOnboardingComplete} />
         </CardContent>
       </Card>
     )
@@ -174,7 +128,7 @@ export function AuthSection() {
         <Button
           variant="outline"
           className="w-full"
-          onClick={() => googleLogin()}
+          onClick={handleGoogleSignIn}
           disabled={loading}
         >
           <Chrome className="mr-2 h-4 w-4" />

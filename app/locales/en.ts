@@ -150,7 +150,8 @@ const en = {
 
     // Saved sizes
     "saved.title": "Your Saved Sizes",
-    "saved.subtitle": "Manage your work clothing size information. You have {count} saved size{plural}.",
+    "saved.subtitle": "Manage your work clothing size information. You have {count} saved size.",
+    "saved.subtitlePlural": "Manage your work clothing size information. You have {count} saved sizes.",
     "saved.noSizes":
       "You haven't saved any clothing sizes yet. Start by selecting a clothing type and entering your measurements.",
     "saved.measurements": "Measurements:",

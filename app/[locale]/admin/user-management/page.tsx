@@ -3,6 +3,7 @@
 import { useEffect, useState, useRef } from "react"
 import { useRouter } from "next/navigation"
 import { useLanguage } from "@/contexts/language-context"
+import { useAuth } from "@/hooks/use-auth"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Table, TableBody, TableCaption, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
@@ -68,22 +69,31 @@ export default function UserManagementPage() {
   // Track if filters have been manually changed
   const [shouldFetchData, setShouldFetchData] = useState(true);
   
+  // Get user auth state from NextAuth
+  const { user, isAuthenticated, isLoading: authLoading } = useAuth();
+  
   useEffect(() => {
     async function fetchUsers() {
       try {
         setIsLoading(true);
         setError(null);
         
-        const email = localStorage.getItem('user_data') ? 
-          JSON.parse(localStorage.getItem('user_data') || '{}').email : null;
-          
-        const token = localStorage.getItem('auth_token') || '';
+        // Check if user is authenticated and has admin privileges
+        if (!isAuthenticated || !user) {
+          setError(t('admin.unauthorized'));
+          setIsLoading(false);
+          return;
+        }
+        
+        if (!(user.isAdmin || user.isSuperadmin || user.userType === 1 || user.userType === 2)) {
+          setError(t('admin.unauthorized'));
+          setIsLoading(false);
+          return;
+        }
         
         // Build URL with filters
         let url = '/api/admin/users';
         const params = new URLSearchParams();
-        
-        if (email) params.append('email', email);
         
         // Ensure filters are properly added as parameters
         if (filters.companyId !== null && filters.companyId !== undefined) {
@@ -99,9 +109,6 @@ export default function UserManagementPage() {
         const urlWithParams = params.toString() ? `${url}?${params.toString()}` : url;
         
         const response = await fetch(urlWithParams, {
-          headers: {
-            Authorization: token ? `Bearer ${token}` : '',
-          },
           credentials: 'include'
         });
 

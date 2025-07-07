@@ -5,6 +5,7 @@ import "../globals.css";
 import { GoogleOAuthProvider } from "@react-oauth/google";
 import { LanguageProvider } from "@/contexts/language-context";
 import LanguageSelector from "@/components/language-selector";
+import { AuthProvider } from "@/components/auth-provider";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -66,14 +67,17 @@ export default async function RootLayout({
   return (
     <html lang={locale}>
       <body className={inter.className}>
-        <LanguageProvider>
-          <GoogleOAuthProvider clientId="806133975237-vscpf295q14u2p73p7v446k76l3e4164.apps.googleusercontent.com">
-            <header className="flex justify-end p-4">
-              <LanguageSelector />
-            </header>
-            <main>{children}</main>
-          </GoogleOAuthProvider>
-        </LanguageProvider>
+        {/* Agregamos el AuthProvider para gestionar la autenticación con NextAuth */}
+        <AuthProvider>
+          <LanguageProvider>
+            <GoogleOAuthProvider clientId="806133975237-vscpf295q14u2p73p7v446k76l3e4164.apps.googleusercontent.com">
+              <header className="flex justify-end p-4">
+                <LanguageSelector />
+              </header>
+              <main>{children}</main>
+            </GoogleOAuthProvider>
+          </LanguageProvider>
+        </AuthProvider>
       </body>
     </html>
   );

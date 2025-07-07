@@ -7,12 +7,14 @@ interface AuthState {
   error?: string
   message?: string
   userData?: any
-  sessionToken?: string
   errorLocale?: boolean // Indica si el error es una clave de traducción
+  requiresOnboarding?: boolean
+  redirect?: string
 }
 
 export async function loginUser(prevState: AuthState | null, formData: FormData): Promise<AuthState> {
   const { default: prisma } = await import("@/lib/prisma");  
+  const { signIn } = await import("@/auth");
   const email = formData.get("email") as string
   const password = formData.get("password") as string
   const locale = formData.get("locale") as string || "en"; // Get the current locale
@@ -26,16 +28,15 @@ export async function loginUser(prevState: AuthState | null, formData: FormData)
   }
 
   try {
-    // Find user in database with company relation
-    const user = await prisma.fc_user.findUnique({
-      where: { email },
-      include: {
-        fc_company: true,
-        fc_user_type: true
-      }
-    })
+    // Use NextAuth's signIn function
+    const result = await signIn("credentials", {
+      email,
+      password,
+      redirect: false
+    });
 
-    if (!user) {
+    if (!result?.ok) {
+      // Handle login failure
       return {
         success: false,
         error: "login.form.invalidCredentials",
@@ -43,45 +44,10 @@ export async function loginUser(prevState: AuthState | null, formData: FormData)
       }
     }
 
-    // Compare password hash
-    const isValid = await bcrypt.compare(password, user.password_hash)
-    if (!isValid) {
-      return {
-        success: false,
-        error: "login.form.invalidCredentials",
-        errorLocale: true
-      }
-    }
-
-    // Determine user type and roles
-    const userType = user.user_type || 3; // Default to employee (3) if not set
-    const isSuperadmin = userType === 1; // Type 1 is superadmin
-    const isAdmin = userType === 2; // ONLY Type 2 is admin, as requested
-    
-    // Create userData for client storage
-    const userData = {
-      id: user.id,
-      name: user.username,
-      email: user.email,
-      gender: user.is_male ? "Male" : "Female",
-      companyId: user.company_id?.toString() || "N/A",
-      companyName: user.fc_company?.description || "N/A",
-      joinDate: new Date().toISOString().split('T')[0],
-      userType: userType,
-      userTypeName: userType === 1 ? "Superadmin" : userType === 2 ? "Admin" : "Employee",
-      isAdmin: isAdmin,
-      isSuperadmin: isSuperadmin
-    };
-
-    // Create a session token
-    const sessionToken = generateSessionToken();
-    
-    // Set cookie in response header
+    // Login successful - NextAuth will handle the session
     return {
       success: true,
-      message: "Login successful! Redirecting to dashboard...",
-      userData: userData,
-      sessionToken: sessionToken
+      message: "Login successful! Redirecting to dashboard..."
     };
   } catch (error) {
     console.error("Login error:", error);
@@ -93,11 +59,7 @@ export async function loginUser(prevState: AuthState | null, formData: FormData)
   }
 }
 
-// Helper function to generate a random token
-function generateSessionToken() {
-  return Math.random().toString(36).substring(2, 15) + 
-         Math.random().toString(36).substring(2, 15);
-}
+// No longer needed as we're using NextAuth for session management
 
 export async function registerUser(prevState: AuthState | null, formData: FormData): Promise<AuthState> {
   const name = formData.get("name") as string
@@ -203,32 +165,20 @@ export async function registerUser(prevState: AuthState | null, formData: FormDa
       },
     })
     
-    // Create userData for client storage
-    // By default, new users are type 3 (Employee)
-    const userType = user.user_type || 3;
-    const userData = {
-      id: user.id,
-      name: user.username,
-      email: user.email,
-      gender: gender === 'male' ? "Male" : "Female",
-      companyId: companyId?.toString() || "N/A",
-      companyName: foundCompanyName,
-      joinDate: new Date().toISOString().split('T')[0],
-      userType: userType,
-      userTypeName: "Employee", // Default for new users
-      isAdmin: userType === 2, // ONLY Type 2 is admin, as requested
-      isSuperadmin: userType === 1 // Only type 1 is superadmin
-    };
-
-    // Create a session token
-    const sessionToken = generateSessionToken();
+    // Import signIn from NextAuth
+    const { signIn } = await import("@/auth");
     
-    // Return success with user data for auto-login
+    // Auto-login the user with NextAuth after registration
+    await signIn("credentials", {
+      email,
+      password,
+      redirect: false
+    });
+    
+    // Return success - NextAuth will handle the session
     return {
       success: true,
-      message: "Account created successfully! Redirecting to dashboard...",
-      userData: userData,
-      sessionToken: sessionToken
+      message: "Account created successfully! Redirecting to dashboard..."
     };
     
   } catch (error) {
@@ -245,7 +195,11 @@ export async function completeOnboarding(prevState: AuthState | null, formData: 
   // Simulate API delay
   await new Promise((resolve) => setTimeout(resolve, 1000))
 
-  const email = formData.get("email") as string
+  // Get user email from NextAuth session
+  const { auth } = await import("@/auth");
+  const session = await auth();
+  const email = session?.user?.email;
+  
   const companyName = formData.get("companyName") as string
   const gender = formData.get("gender") as string
   const locale = formData.get("locale") as string || "en"; // Get the current locale
@@ -356,14 +310,13 @@ export async function completeOnboarding(prevState: AuthState | null, formData: 
       isSuperadmin: isSuperadmin
     };
 
-    // Generate a session token
-    const sessionToken = generateSessionToken();
+    // The sign-in will be handled on the client side after onboarding completes
+    // We'll return successful response and the client will handle auth
 
     return {
       success: true,
       message: "Profile completed successfully! Redirecting to dashboard...",
-      userData: userData,
-      sessionToken: sessionToken
+      userData: userData
     };
   } catch (error) {
     console.error("Onboarding error:", error);
@@ -385,6 +338,7 @@ export async function handleGoogleAuth(googleProfile: {
 }) {
   try {
     const { default: prisma } = await import("@/lib/prisma");
+    const { signIn } = await import("@/auth");
 
     // Check if user exists by email
     let user = await prisma.fc_user.findUnique({
@@ -399,9 +353,6 @@ export async function handleGoogleAuth(googleProfile: {
         fc_user_type: true
       }
     }) : null;
-
-    // Generate a session token for authentication
-    const sessionToken = generateSessionToken();
     
     // Prepare user data for client storage
     const userData: any = {
@@ -432,12 +383,18 @@ export async function handleGoogleAuth(googleProfile: {
       // Update userData with user id
       userData.id = user.id;
       
+      // Sign in the user with NextAuth
+      await signIn("credentials", {
+        email: user.email,
+        // No password needed as we're just setting up the NextAuth session
+        redirect: false
+      });
+      
       // Trigger onboarding flow for new users
       return {
         success: true,
         requiresOnboarding: true,
         userData: userData,
-        sessionToken: sessionToken,
         error: undefined,
       }
     }
@@ -481,12 +438,14 @@ export async function handleGoogleAuth(googleProfile: {
       }
     }
     
+    // Authentication will be handled by the client using credentials provider
+    // with the Google profile information we've already validated
+    
     // Return data for authenticated user
     return {
       success: true,
       redirect: "/dashboard",
       userData: userData,
-      sessionToken: sessionToken,
       error: undefined,
     }
   } catch (err: any) {

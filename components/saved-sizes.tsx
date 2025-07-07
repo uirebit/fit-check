@@ -8,6 +8,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert"
 import { getSavedSizes, deleteSavedSize } from "@/app/actions/sizes"
 import { Trash2, Edit, Package, Calendar } from "lucide-react"
 import { useLanguage } from "@/contexts/language-context"
+import { useAuth } from "@/hooks/use-auth"
 
 interface SavedSize {
   id: string
@@ -22,29 +23,32 @@ export function SavedSizes() {
   const [savedSizes, setSavedSizes] = useState<SavedSize[]>([])
   const [loading, setLoading] = useState(true)
   const { t } = useLanguage()
+  const { user, isAuthenticated, isLoading } = useAuth()
 
   useEffect(() => {
-    loadSavedSizes()
-  }, [])
+    if (!isLoading) {
+      // Solo cargar tallas cuando la sesión esté lista y el usuario esté autenticado
+      if (isAuthenticated) {
+        loadSavedSizes()
+      } else {
+        setLoading(false)
+      }
+    }
+  }, [isLoading, isAuthenticated, user])
 
   const loadSavedSizes = async () => {
     try {
-      // Get user email from localStorage if available
-      let userEmail = "";
-      
-      if (typeof window !== 'undefined') {
-        try {
-          const storedUser = localStorage.getItem('user_data');
-          if (storedUser) {
-            const userData = JSON.parse(storedUser);
-            userEmail = userData.email || '';
-          }
-        } catch (e) {
-          console.error("Error getting user email from localStorage:", e);
-        }
+      // Solo cargar tallas si el usuario está autenticado con NextAuth
+      if (!isAuthenticated || !user?.email) {
+        console.error("No authenticated user found");
+        setSavedSizes([]);
+        setLoading(false);
+        return;
       }
       
-      const sizes = await getSavedSizes(userEmail)
+      // Obtener las tallas guardadas usando la sesión de NextAuth en el servidor
+      // Ya no necesitamos pasar el userEmail porque se obtiene en el servidor
+      const sizes = await getSavedSizes()
       setSavedSizes(sizes)
     } catch (error) {
       console.error("Failed to load saved sizes:", error)
@@ -75,12 +79,34 @@ export function SavedSizes() {
     )
   }
 
+  // Verificar si el usuario está autenticado con NextAuth
+  if (!isAuthenticated) {
+    return (
+      <div className="flex flex-col items-center justify-center py-12">
+        <Alert variant="destructive" className="max-w-md">
+          <AlertDescription>
+            {t("error.authRequired") || "You need to be logged in to access this feature. Please sign in to continue."}
+          </AlertDescription>
+        </Alert>
+        <Button 
+          variant="link" 
+          className="mt-4"
+          onClick={() => window.location.href = `/${t("locale") || "en"}/login`}
+        >
+          {t("login.goToLogin") || "Go to login page"}
+        </Button>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6">
       <div className="mb-8">
         <h1 className="text-3xl font-bold text-gray-900 mb-2">{t("saved.title")}</h1>
         <p className="text-gray-600">
-          {t("saved.subtitle").replace("{count}", savedSizes.length.toString()).replace("{plural}", savedSizes.length !== 1 ? "s" : "")}
+          {savedSizes.length === 1 
+            ? t("saved.subtitle").replace("{count}", savedSizes.length.toString())
+            : t("saved.subtitlePlural").replace("{count}", savedSizes.length.toString())}
         </p>
       </div>
 
@@ -97,7 +123,7 @@ export function SavedSizes() {
             <Card key={size.id} className="relative">
               <CardHeader>
                 <div className="flex items-center justify-between">
-                  <CardTitle className="text-lg">{t(`clothing.${size.clothingType}`) || size.clothingName}</CardTitle>
+                  <CardTitle className="text-lg">{t(`fc_cloth.${size.clothingName.toLowerCase().replace(/\s+/g, "_")}`) || size.clothingName}</CardTitle>
                   <Badge variant="default" className="text-lg">
                     {size.calculatedSize}
                   </Badge>

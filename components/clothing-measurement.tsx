@@ -13,6 +13,7 @@ import { calculateEUSize } from "@/lib/size-calculator"
 import { getMeasurementInstructions } from "@/lib/measurement-instructions"
 import { Loader2, Save, Ruler } from "lucide-react"
 import { useLanguage } from "@/contexts/language-context"
+import { useAuth } from "@/hooks/use-auth"
 
 interface ClothingMeasurementProps {
   clothingType: string
@@ -29,6 +30,7 @@ export function ClothingMeasurement({ clothingType, clothingName, userGender }: 
   const [loadingSavedData, setLoadingSavedData] = useState(false)
   const [hasSavedData, setHasSavedData] = useState(false)
   const { t } = useLanguage()
+  const { user, isAuthenticated } = useAuth()
 
   // First get the static instructions
   const instructions = getMeasurementInstructions(clothingType, userGender)
@@ -36,100 +38,146 @@ export function ClothingMeasurement({ clothingType, clothingName, userGender }: 
   // Get the normalized clothing type to use for instruction translations
   const normalizedClothingType = clothingType.replace(/_/g, '-');
 
+  // Track whether the effect has already been run for this clothing type
+  const [effectRan, setEffectRan] = useState<string | null>(null);
+  
   // Clear form and fetch measure mappings when clothing type changes
   useEffect(() => {
-    setMeasurements({})
-    setCalculatedSize("")
-    setLoading(true)
-    setHasSavedData(false)
+    // Skip if we've already run this effect for the current clothing type
+    // This prevents infinite loops by ensuring the effect only runs once per clothing type
+    if (effectRan === clothingType) {
+      return;
+    }
+
+    console.log(`Loading data for clothing type: ${clothingType}`);
     
-    // Import dynamically to avoid server/client mismatch
-    import("@/app/actions/clothing").then(({ getClothingMeasureMappings }) => {
-      getClothingMeasureMappings(clothingType)
-        .then((mappings) => {
-          if (mappings && mappings.length > 0) {
-            // Create measurement fields based on the mappings
-            const fields = mappings.map(mapping => ({
-              field: mapping.measure_key,
-              label: t(`measure.${mapping.measure_key}`) || mapping.measure_key,
-              placeholder: t(`measure.${mapping.measure_key}Placeholder`) || `Enter ${mapping.measure_key}`,
-              description: t(`measure.${mapping.measure_key}Desc`) || `Measurement #${mapping.measure_number}`,
-              measure_number: mapping.measure_number
-            }));
-            setMeasureFields(fields);
-          } else {
-            // If no mappings found, use the static instructions as fallback
-            setMeasureFields(instructions.measurements);
-          }
-          setLoading(false);
-          
-          // After loading fields, check if there are saved measurements
-          if (typeof window !== 'undefined') {
-            const storedUser = localStorage.getItem('user_data');
-            if (storedUser) {
-              const userData = JSON.parse(storedUser);
-              const userEmail = userData.email;
-              
-              if (userEmail) {
-                setLoadingSavedData(true);
-                
-                // Import getUserMeasurements dynamically
-                import("@/app/actions/clothing").then(({ getUserMeasurements }) => {
-                  getUserMeasurements(userEmail, clothingType)
-                    .then(savedMeasurement => {
-                      if (savedMeasurement && savedMeasurement.values.length > 0) {
-                        // Convert saved values to the format used by the form
-                        const savedValues: Record<string, string> = {};
-                        savedMeasurement.values.forEach(value => {
-                          if (value.measure_key && value.measure_value !== undefined) {
-                            savedValues[value.measure_key] = value.measure_value.toString();
-                          }
-                        });
-                        
-                        setMeasurements(savedValues);
-                        setHasSavedData(true);
-                        
-                        // Calculate size based on the saved measurements
-                        const size = calculateEUSize(clothingType, savedValues);
-                        setCalculatedSize(size);
-                      }
-                      setLoadingSavedData(false);
-                    })
-                    .catch(error => {
-                      console.error("Error loading saved measurements:", error);
-                      setLoadingSavedData(false);
-                    });
-                });
-              }
-            }
-          }
-        })
-        .catch(error => {
-          console.error("Error loading measurement fields:", error);
-          // Use the static instructions as fallback
+    // Mark that we're running the effect for this clothing type
+    setEffectRan(clothingType);
+    
+    // Reset state
+    setMeasurements({});
+    setCalculatedSize("");
+    setLoading(true);
+    setHasSavedData(false);
+    
+    // Define a function to load all data in sequence
+    const loadData = async () => {
+      try {
+        // Step 1: Import the necessary functions
+        const { getClothingMeasureMappings, getUserMeasurements } = await import("@/app/actions/clothing");
+        
+        // Step 2: Get the clothing measure mappings
+        const mappings = await getClothingMeasureMappings(clothingType);
+        
+        // Step 3: Set up the measurement fields
+        if (mappings && mappings.length > 0) {
+          const fields = mappings.map(mapping => ({
+            field: mapping.measure_key,
+            label: t(`measure.${mapping.measure_key}`) || mapping.measure_key,
+            placeholder: t(`measure.${mapping.measure_key}Placeholder`) || `Enter ${mapping.measure_key}`,
+            description: t(`measure.${mapping.measure_key}Desc`) || `Measurement #${mapping.measure_number}`,
+            measure_number: mapping.measure_number
+          }));
+          setMeasureFields(fields);
+        } else {
+          // If no mappings found, use the static instructions as fallback
           setMeasureFields(instructions.measurements);
-          setLoading(false);
-        });
-    });
-  }, [clothingType, t])
+        }
+        
+        // Step 4: Mark loading of fields as complete
+        setLoading(false);
+        
+        // Step 5: Only load saved measurements if authenticated
+        if (isAuthenticated && user?.email) {
+          setLoadingSavedData(true);
+          
+          // Step 6: Get user's saved measurements for this clothing type
+          const savedMeasurement = await getUserMeasurements(clothingType);
+          
+          if (savedMeasurement && savedMeasurement.values.length > 0) {
+            // Convert saved values to the format used by the form
+            const savedValues: Record<string, string> = {};
+            savedMeasurement.values.forEach(value => {
+              if (value.measure_key && value.measure_value !== undefined) {
+                savedValues[value.measure_key] = value.measure_value.toString();
+              }
+            });
+            
+            // Batch state updates to minimize re-renders
+            setMeasurements(savedValues);
+            setHasSavedData(true);
+            
+            // Calculate size based on the saved measurements
+            const size = calculateEUSize(clothingType, savedValues);
+            setCalculatedSize(size);
+          }
+          
+          // Step 7: Mark loading of saved data as complete
+          setLoadingSavedData(false);
+        }
+      } catch (error) {
+        console.error("Error loading data:", error);
+        // Use the static instructions as fallback
+        setMeasureFields(instructions.measurements);
+        setLoading(false);
+        setLoadingSavedData(false);
+      }
+    };
+    
+    // Execute the data loading function
+    loadData();
+    
+  // Only depend on clothingType to prevent unnecessary re-renders
+  // Instructions are stable and don't change, so we don't need them in deps
+  }, [clothingType])
 
   const handleMeasurementChange = (field: string, value: string) => {
-    const newMeasurements = { ...measurements, [field]: value }
-    setMeasurements(newMeasurements)
+    // Update measurements object with new value
+    const newMeasurements = { ...measurements, [field]: value };
+    setMeasurements(newMeasurements);
 
-    // Calculate EU size when all required measurements are filled
-    const allFieldsFilled = measureFields.every(
-      (m) => newMeasurements[m.field] && newMeasurements[m.field] !== "",
-    )
+    // Use a slight delay for size calculation to avoid excessive recalculations
+    // during rapid input changes
+    const timer = setTimeout(() => {
+      // Check if all required fields are filled
+      const allFieldsFilled = measureFields.every(
+        (m) => newMeasurements[m.field] && newMeasurements[m.field] !== "",
+      );
 
-    if (allFieldsFilled) {
-      const size = calculateEUSize(clothingType, newMeasurements)
-      setCalculatedSize(size)
-    } else {
-      setCalculatedSize("")
-    }
+      if (allFieldsFilled) {
+        // Calculate size only when all fields are filled
+        const size = calculateEUSize(clothingType, newMeasurements);
+        setCalculatedSize(size);
+      } else {
+        // Clear calculated size if not all fields are filled
+        setCalculatedSize("");
+      }
+    }, 100); // 100ms delay to debounce multiple rapid changes
+
+    // Cleanup timer on component unmount
+    return () => clearTimeout(timer);
   }
 
+  // Verificar si el usuario está autenticado con NextAuth
+  if (!isAuthenticated) {
+    return (
+      <div className="flex flex-col items-center justify-center py-12">
+        <Alert variant="destructive" className="max-w-md">
+          <AlertDescription>
+            {t("error.authRequired") || "You need to be logged in to access this feature. Please sign in to continue."}
+          </AlertDescription>
+        </Alert>
+        <Button 
+          variant="link" 
+          className="mt-4"
+          onClick={() => window.location.href = `/${t("locale") || "en"}/login`}
+        >
+          {t("login.goToLogin") || "Go to login page"}
+        </Button>
+      </div>
+    );
+  }
+  
   return (
     <div className="grid lg:grid-cols-2 gap-8">
       {/* Measurement Instructions */}
@@ -215,38 +263,7 @@ export function ClothingMeasurement({ clothingType, clothingName, userGender }: 
             <input type="hidden" name="clothingName" value={clothingName} />
             <input type="hidden" name="calculatedSize" value={calculatedSize} />
             
-            {/* Pass user email from client to server action */}
-            {typeof window !== 'undefined' && (
-              <>
-                <input 
-                  type="hidden" 
-                  name="userEmail" 
-                  value={(() => {
-                    // Try to get email from localStorage
-                    try {
-                      const storedUser = localStorage.getItem('user_data');
-                      if (storedUser) {
-                        const userData = JSON.parse(storedUser);
-                        return userData.email || '';
-                      }
-                    } catch (e) {
-                      console.error("Error getting user email from localStorage:", e);
-                    }
-                    return '';
-                  })()} 
-                />
-                <input 
-                  type="hidden" 
-                  name="hasAuth" 
-                  value={(() => {
-                    // Check if there are any auth cookies
-                    return document.cookie.includes('auth_token') || 
-                           document.cookie.includes('user_session') ? 
-                           'true' : 'false';
-                  })()}
-                />
-              </>
-            )}
+            {/* No necesitamos campos ocultos para la autenticación, ya que usamos NextAuth */}
 
             {loading ? (
               <div className="flex justify-center items-center py-8">
