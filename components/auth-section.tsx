@@ -31,29 +31,65 @@ export function AuthSection() {
   }
 
   // Google login handler that uses NextAuth directly
-  const handleGoogleSignIn = () => {
-    try {
-      setLoading(true);
-      
-      // Get current language for redirection
-      const pathParts = window.location.pathname.split('/');
-      const language = pathParts.length > 1 ? pathParts[1] : 'en';
-      
-      // For Google OAuth, we need to redirect to their auth page
-      // We use the callbackUrl to tell NextAuth where to go after successful auth
-      signIn("google", { 
-        callbackUrl: `/${language}/dashboard`
-      });
-      
-      // Note: No need for error handling here since Google login
-      // will redirect away from this page entirely
-    } catch (error) {
-      console.error("Google sign-in error:", error);
+  const handleGoogleSignIn = async () => {
+  try {
+    setLoading(true);
+    
+    // Get current language for redirection
+    const pathParts = window.location.pathname.split('/');
+    const language = pathParts.length > 1 ? pathParts[1] : 'en';
+    
+    // Use NextAuth's Google provider
+    const result = await signIn("google", {
+      redirect: false, // Don't auto-redirect
+      callbackUrl: `/${language}/dashboard`
+    });
+    
+    if (result?.error) {
+      console.error("Google sign-in error:", result.error);
       alert("Google sign-in failed. Please try again.");
-      setLoading(false);
+      return;
     }
-  };
-
+    
+    if (result?.ok) {
+      // After successful Google sign-in, check if user needs onboarding
+      // Get session to access user data
+      const { getSession } = await import("next-auth/react");
+      const session = await getSession();
+      
+      if (session?.user?.email) {
+        // Call your custom auth handler to check onboarding status
+        const { handleGoogleAuth } = await import("@/app/actions/auth");
+        
+        const authResult = await handleGoogleAuth({
+          id: session.user.id || "google-" + Date.now(),
+          email: session.user.email,
+          name: session.user.name || "",          
+          verified_email: true
+        });
+        
+        if (authResult.success && authResult.requiresOnboarding) {
+          // Set user email for onboarding
+          setUserEmail(authResult.userData.email);
+          // Trigger onboarding flow
+          setAuthStep("onboarding");
+        } else if (authResult.success) {
+          // User exists and is complete, redirect to dashboard
+          window.location.href = `/${language}/dashboard`;
+        } else {
+          // Handle error
+          alert(authResult.error || "Authentication failed");
+        }
+      }
+    }
+    
+  } catch (error) {
+    console.error("Google sign-in error:", error);
+    alert("Google sign-in failed. Please try again.");
+  } finally {
+    setLoading(false);
+  }
+};
   const handleOnboardingComplete = async () => {
     // Get current language from pathname
     const pathParts = window.location.pathname.split('/');

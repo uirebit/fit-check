@@ -381,15 +381,8 @@ export async function handleGoogleAuth(googleProfile: {
       })
       
       // Update userData with user id
-      userData.id = user.id;
-      
-      // Sign in the user with NextAuth
-      await signIn("credentials", {
-        email: user.email,
-        // No password needed as we're just setting up the NextAuth session
-        redirect: false
-      });
-      
+      userData.id = user.id;      
+     
       // Trigger onboarding flow for new users
       return {
         success: true,
