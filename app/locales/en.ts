@@ -221,6 +221,10 @@ const en = {
     "signin.alreadyHaveAccount": "Already have an account? Sign in",
     
     // Onboarding Form    
+    "onboarding.title": "Complete Your",
+    "onboarding.subtitle": "Setup",
+    "onboarding.description": "We need a few more details to personalize your experience and connect you with your company.",
+    "onboarding.welcome": "Welcome! Let's complete your profile setup.",
     "onboarding.companyId": "Company ID",
     "onboarding.companyName": "Company Name",
     "onboarding.companyIdPlaceholder": "Enter your company ID",
@@ -230,11 +234,15 @@ const en = {
     "onboarding.error.invalidCompanyId": "Company ID must be 3-20 alphanumeric characters",
     "onboarding.error.invalidCompanyName": "Company name must be 2-100 characters",
     "onboarding.error.companyNotFound": "The specified company doesn't exist in our records. Please verify the name and try again.",
+    "onboarding.error.userNotFound": "User not found. Please try logging in again.",
+    "onboarding.error.serverError": "An error occurred. Please try again later.",
     "onboarding.gender": "Gender",
     "onboarding.genderMale": "Male",
     "onboarding.genderFemale": "Female",
     "onboarding.successMessage": "Profile completed successfully! Redirecting to dashboard...",
     "onboarding.completingSetup": "Completing setup...",
+    "onboarding.redirecting": "Redirecting to dashboard...",
+    "onboarding.completeSetup": "Complete Setup",
     
     // Dashboard
     "dashboard.welcomeBack": "Welcome back",

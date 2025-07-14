@@ -223,6 +223,9 @@ const es = {
     "signin.alreadyHaveAccount": "¿Ya tienes una cuenta? Inicia sesión",
     
     // Onboarding Form
+    "onboarding.title": "Completa Tu",
+    "onboarding.subtitle": "Configuración",
+    "onboarding.description": "Necesitamos algunos detalles más para personalizar tu experiencia y conectarte con tu empresa.",
     "onboarding.completeprofile": "Completa tu Perfil",
     "onboarding.completeprofile.description": "Por favor proporciona información adicional para completar tu registro",
     "onboarding.welcome": "¡Bienvenido! Solo unos detalles más para comenzar.",

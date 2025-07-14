@@ -20,7 +20,7 @@ model fc_user {
   username              String                  @db.VarChar(100)
   password_hash         String                  @db.VarChar(100)
   email                 String                  @unique(map: "unique_email") @db.VarChar(100)
-  is_male               Boolean
+  is_male               Boolean?
   company_id            Int?
   user_type             Int?                    @default(3)
   creation_date         DateTime?               @default(now()) @db.Timestamp(6)

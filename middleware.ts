@@ -11,7 +11,8 @@ const PROTECTED_PATHS = [
   '/sizes',
   '/settings',
   '/account',
-  '/admin'
+  '/admin',
+  '/onboarding'
 ];
 
 // Admin paths that require admin privileges
@@ -20,7 +21,7 @@ const ADMIN_PATHS = [
 ];
 
 export async function middleware(request: NextRequest) {
-  const { pathname } = request.nextUrl
+  const { pathname, searchParams } = request.nextUrl
 
   // Check if this is a protected path (case-insensitive)
   const isProtectedPath = PROTECTED_PATHS.some(path => 
@@ -43,6 +44,44 @@ export async function middleware(request: NextRequest) {
     if (!token) {
       // No session found, redirect to login page with the same locale (root page with auth form)
       return NextResponse.redirect(new URL(`/${redirectLocale}`, request.url));
+    }
+    
+    // Check if user needs onboarding (except for superadmins and if already on onboarding page)
+    const isOnboardingPath = pathname.replace(/^\/[a-z]{2}/, '').startsWith('/onboarding');
+    const companyId = token.companyId as string | null | undefined;
+    const gender = token.gender as string | null | undefined;
+    const isSuperadmin = token.isSuperadmin as boolean | undefined;
+    
+    // Check if onboarding was just completed (indicated by query parameter)
+    const onboardingCompleted = searchParams.get('onboarding-completed') === 'true';
+    
+    // Debug logging
+    console.log('Middleware check:', {
+      pathname,
+      isOnboardingPath,
+      companyId,
+      gender,
+      isSuperadmin,
+      onboardingCompleted,
+      needsOnboarding: !companyId || !gender
+    });
+    
+    // If onboarding was just completed, allow access to dashboard even if token isn't updated yet
+    if (onboardingCompleted && pathname.replace(/^\/[a-z]{2}/, '').startsWith('/dashboard')) {
+      console.log('Allowing dashboard access after onboarding completion');
+      return NextResponse.next();
+    }
+    
+    // Redirect to onboarding if user doesn't have companyId or gender (unless they're superadmin or already on onboarding)
+    if (!isSuperadmin && !isOnboardingPath && (!companyId || !gender)) {
+      console.log('Redirecting to onboarding');
+      return NextResponse.redirect(new URL(`/${redirectLocale}/onboarding`, request.url));
+    }
+    
+    // If user is on onboarding page but already has complete data, redirect to dashboard
+    if (isOnboardingPath && companyId && gender) {
+      console.log('Redirecting to dashboard from onboarding');
+      return NextResponse.redirect(new URL(`/${redirectLocale}/dashboard`, request.url));
     }
     
     // Check for admin paths

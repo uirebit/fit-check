@@ -37,7 +37,7 @@ export const authConfig: NextAuthConfig = {
             return null
           }
 
-          // Check if this is a Google OAuth login
+          // Check if this is a Google OAuth login or refresh
           const isGoogleAuth = credentials.password.toString().startsWith('google-oauth2-');
           
           let isValidPassword = false;
@@ -93,7 +93,8 @@ export const authConfig: NextAuthConfig = {
     })
   ],
   callbacks: {
-    jwt({ token, user }) {
+    async jwt({ token, user, trigger }) {
+      // If this is initial sign in with user data, use it
       if (user) {
         token.id = user.id
         token.email = user.email
@@ -104,22 +105,105 @@ export const authConfig: NextAuthConfig = {
         token.userType = user.userType
         token.isAdmin = user.isAdmin
         token.isSuperadmin = user.isSuperadmin
+        return token
       }
+      
+      // If user has incomplete data (needs onboarding), always refresh from database
+      const needsOnboarding = !token.companyId || !token.gender
+      
+      if (needsOnboarding || trigger === "update") {
+        try {
+          const { default: prisma } = await import("@/lib/prisma")
+          
+          if (token.id) {
+            const dbUser = await prisma.fc_user.findUnique({
+              where: { id: parseInt(token.id as string) },
+              include: {
+                fc_company: true
+              }
+            })
+            
+            if (dbUser) {
+              token.id = dbUser.id.toString()
+              token.email = dbUser.email
+              token.name = dbUser.username
+              token.gender = dbUser.is_male !== null ? (dbUser.is_male ? "Male" : "Female") : null
+              token.companyId = dbUser.company_id?.toString() || null
+              token.companyName = dbUser.fc_company?.description || null
+              token.userType = dbUser.user_type || 3
+              token.isAdmin = (dbUser.user_type || 3) === 2
+              token.isSuperadmin = (dbUser.user_type || 3) === 1
+            }
+          }
+        } catch (error) {
+          console.error("Error refreshing token data:", error)
+        }
+      }
+      
       return token
     },
-    session({ session, token }) {
+    async session({ session, token }) {
       if (token && session.user) {
+        // Use token data directly - it's already refreshed in JWT callback when needed
         session.user.id = token.id as string
         session.user.email = token.email as string
         session.user.name = token.name as string
-        session.user.gender = token.gender as string
-        session.user.companyId = token.companyId as string
-        session.user.companyName = token.companyName as string
+        session.user.gender = token.gender as string | null
+        session.user.companyId = token.companyId as string | null
+        session.user.companyName = token.companyName as string | null
         session.user.userType = token.userType as number
         session.user.isAdmin = token.isAdmin as boolean
         session.user.isSuperadmin = token.isSuperadmin as boolean
       }
       return session
+    },
+    async signIn({ user, account, profile }) {
+      // Handle Google OAuth sign-in
+      if (account?.provider === "google") {
+        try {
+          const { default: prisma } = await import("@/lib/prisma")
+          
+          // Check if user exists in our database
+          let existingUser = await prisma.fc_user.findUnique({
+            where: { email: user.email! }
+          })
+          
+          if (!existingUser) {
+            // Create new user for Google OAuth with null values for onboarding
+            existingUser = await prisma.fc_user.create({
+              data: {
+                email: user.email!,
+                username: user.name || user.email!.split('@')[0],
+                password_hash: "", // Empty for OAuth users
+                is_male: null, // Will be set during onboarding
+                company_id: null, // Will be set during onboarding
+              }
+            })
+          }
+          
+          // Update user object with database info for JWT callback
+          user.id = existingUser.id.toString()
+          user.companyId = existingUser.company_id?.toString() || null
+          user.gender = existingUser.is_male !== null ? (existingUser.is_male ? "Male" : "Female") : null
+          user.userType = existingUser.user_type || 3
+          user.isAdmin = (existingUser.user_type || 3) === 2
+          user.isSuperadmin = (existingUser.user_type || 3) === 1
+          
+          // Get company name if available
+          if (existingUser.company_id) {
+            const company = await prisma.fc_company.findUnique({
+              where: { id: existingUser.company_id }
+            })
+            user.companyName = company?.description || null
+          } else {
+            user.companyName = null
+          }
+        } catch (error) {
+          console.error("Google OAuth sign-in error:", error)
+          return false
+        }
+      }
+      return true
     }
   },
   pages: {

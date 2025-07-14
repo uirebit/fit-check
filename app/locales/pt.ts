@@ -222,6 +222,9 @@ const pt = {
     "signin.alreadyHaveAccount": "Já tem uma conta? Entre",
     
     // Onboarding Form
+    "onboarding.title": "Complete Sua",
+    "onboarding.subtitle": "Configuração",
+    "onboarding.description": "Precisamos de mais alguns detalhes para personalizar sua experiência e conectá-lo com sua empresa.",
     "onboarding.completeprofile": "Complete seu Perfil",
     "onboarding.completeprofile.description": "Por favor forneça algumas informações adicionais para completar seu cadastro",
     "onboarding.welcome": "Bem-vindo! Apenas mais alguns detalhes para começar.",

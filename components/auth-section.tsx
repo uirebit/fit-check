@@ -10,12 +10,13 @@ import { Button } from "@/components/ui/button"
 import { Separator } from "@/components/ui/separator"
 import { Chrome } from "lucide-react"
 import { useLanguage } from "@/contexts/language-context"
-import { signIn } from "next-auth/react"
+import { signIn, useSession } from "next-auth/react"
 
 type AuthStep = "auth" | "onboarding" | "forgot-password"
 
 export function AuthSection() {
   const { t } = useLanguage();
+  const { update } = useSession();
   const [isLogin, setIsLogin] = useState(true)
   const [authStep, setAuthStep] = useState<AuthStep>("auth")
   const [userEmail, setUserEmail] = useState<string>("")
@@ -32,92 +33,44 @@ export function AuthSection() {
 
   // Google login handler that uses NextAuth directly
   const handleGoogleSignIn = async () => {
-  try {
-    setLoading(true);
-    
-    // Get current language for redirection
-    const pathParts = window.location.pathname.split('/');
-    const language = pathParts.length > 1 ? pathParts[1] : 'en';
-    
-    // Use NextAuth's Google provider
-    const result = await signIn("google", {
-      redirect: false, // Don't auto-redirect
-      callbackUrl: `/${language}/dashboard`
-    });
-    
-    if (result?.error) {
-      console.error("Google sign-in error:", result.error);
-      alert("Google sign-in failed. Please try again.");
-      return;
-    }
-    
-    if (result?.ok) {
-      // After successful Google sign-in, check if user needs onboarding
-      // Get session to access user data
-      const { getSession } = await import("next-auth/react");
-      const session = await getSession();
-      
-      if (session?.user?.email) {
-        // Call your custom auth handler to check onboarding status
-        const { handleGoogleAuth } = await import("@/app/actions/auth");
-        
-        const authResult = await handleGoogleAuth({
-          id: session.user.id || "google-" + Date.now(),
-          email: session.user.email,
-          name: session.user.name || "",          
-          verified_email: true
-        });
-        
-        if (authResult.success && authResult.requiresOnboarding) {
-          // Set user email for onboarding
-          setUserEmail(authResult.userData.email);
-          // Trigger onboarding flow
-          setAuthStep("onboarding");
-        } else if (authResult.success) {
-          // User exists and is complete, redirect to dashboard
-          window.location.href = `/${language}/dashboard`;
-        } else {
-          // Handle error
-          alert(authResult.error || "Authentication failed");
-        }
-      }
-    }
-    
-  } catch (error) {
-    console.error("Google sign-in error:", error);
-    alert("Google sign-in failed. Please try again.");
-  } finally {
-    setLoading(false);
-  }
-};
-  const handleOnboardingComplete = async () => {
-    // Get current language from pathname
-    const pathParts = window.location.pathname.split('/');
-    const language = pathParts.length > 1 ? pathParts[1] : 'en';
-    const redirectUrl = `/${language}/dashboard`;
-    
     try {
-      // Use credentials provider without direct redirect to avoid header errors
-      const signInResult = await signIn("credentials", {
-        email: userEmail,
-        password: `google-oauth2-${Date.now()}`, // Special format to indicate Google auth
-        redirect: false
+      setLoading(true);
+      
+      // Get current language for redirection
+      const pathParts = window.location.pathname.split('/');
+      const language = pathParts.length > 1 ? pathParts[1] : 'en';
+      
+      // Use NextAuth's Google provider with proper redirect
+      // The middleware will handle routing to onboarding or dashboard
+      await signIn("google", {
+        callbackUrl: `/${language}/dashboard`
       });
       
-      if (signInResult?.error) {
-        console.error("Authentication error:", signInResult.error);
-        alert(signInResult.error || "Authentication failed");
-      } else {
-        // Manual navigation after successful sign-in
-        window.location.href = redirectUrl;
-      }
     } catch (error) {
-      console.error("Failed to sign in after onboarding:", error);
-      // Fallback to manual navigation
-      window.location.href = redirectUrl;
+      console.error("Google sign-in error:", error);
+      alert("Google sign-in failed. Please try again.");
+      setLoading(false);
     }
-    
-    setAuthStep("auth");
+  };
+
+   const handleOnboardingComplete = async () => {
+    try {
+      // Get current language from pathname
+      const pathParts = window.location.pathname.split('/');
+      const language = pathParts.length > 1 ? pathParts[1] : 'en';
+      
+      // Add a longer delay to ensure session is fully updated
+      setTimeout(() => {
+        // Force a complete page reload to ensure fresh session data
+        window.location.replace(`/${language}/dashboard`);
+      }, 1000); // Increased delay
+      
+    } catch (error) {
+      console.error("Failed to redirect after onboarding:", error);
+      const pathParts = window.location.pathname.split('/');
+      const language = pathParts.length > 1 ? pathParts[1] : 'en';
+      window.location.replace(`/${language}/dashboard`);
+    }
   }
 
   if (authStep === "onboarding") {

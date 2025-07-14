@@ -6,7 +6,7 @@ declare module "next-auth" {
       id: string
       email: string
       name: string
-      gender: string
+      gender: string | null
       companyId: string | null
       companyName: string | null
       userType: number
@@ -19,7 +19,7 @@ declare module "next-auth" {
     id: string
     email: string
     name: string
-    gender: string
+    gender: string | null
     companyId: string | null
     companyName: string | null
     userType: number
@@ -33,7 +33,7 @@ declare module "next-auth/jwt" {
     id: string
     email: string
     name: string
-    gender: string
+    gender: string | null
     companyId: string | null
     companyName: string | null
     userType: number
