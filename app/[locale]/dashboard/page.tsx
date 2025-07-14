@@ -10,7 +10,7 @@ import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { useLanguage } from "@/contexts/language-context"
 import { useAuth } from "@/hooks/use-auth"
-import { signOut } from "@/auth"
+import { signOut } from "next-auth/react" 
 
 interface UserData {
   name: string;
