@@ -49,11 +49,13 @@ export default function CompanyManagementPage() {
         
         // Check if session is still loading
         if (status === "loading") {
+          console.log('Session still loading...');
           return;
         }
         
         // Check if user is authenticated
         if (status === "unauthenticated" || !session?.user) {
+          console.log('User not authenticated, session status:', status);
           setError("Authentication required");
           setTimeout(() => {
             router.push(`/${language}`);
@@ -62,12 +64,20 @@ export default function CompanyManagementPage() {
         }
         
         const user = session.user as any;
+
+         console.log('User session data:', {
+          email: user.email,
+          userType: user.userType,
+          isSuperadmin: user.isSuperadmin,
+          isAdmin: user.isAdmin
+        });
         
         // Check if user is superadmin (user_type = 1 is superadmin)
         const isSuperadmin = user.isSuperadmin === true || user.userType === 1;
         
         if (!isSuperadmin) {
           setIsAdmin(false);
+          console.log('User is not superadmin:', { userType: user.userType, isSuperadmin: user.isSuperadmin });
           setError(t("admin.unauthorizedSuperadmin") || "Only superadmins can access this page");
           setTimeout(() => {
             router.push(`/${language}/dashboard`);
@@ -76,15 +86,17 @@ export default function CompanyManagementPage() {
         }
         
         setIsAdmin(true);
+        console.log('User is superadmin, fetching companies...');
         
          // Fetch companies from API
-        const response = await fetch(`/api/admin/companies?email=${encodeURIComponent(user.email)}`);
+         const response = await fetch('/api/admin/companies');
         
         if (!response.ok) {
           throw new Error(`Failed to fetch companies: ${response.statusText}`);
         }
         
         const data = await response.json();
+        console.log('Companies fetched successfully:', data.length, 'companies');
         setCompanies(data);
       } catch (err) {
         console.error("Error loading companies:", err);
@@ -95,7 +107,7 @@ export default function CompanyManagementPage() {
     }
     
     fetchCompanies();
-  }, [router, language]);
+  }, [router, language, session, status, t]);
   
   const handleAddCompany = async () => {
     if (!companyName.trim()) {
@@ -104,9 +116,7 @@ export default function CompanyManagementPage() {
     }
     
     try {
-       const user = session?.user as any;
-      
-      const response = await fetch(`/api/admin/companies?email=${encodeURIComponent(user.email)}`, {
+      const response = await fetch('/api/admin/companies', { // Elimina el parámetro de email
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -141,9 +151,7 @@ export default function CompanyManagementPage() {
     }
     
     try {
-      const user = session?.user as any;
-      
-      const response = await fetch(`/api/admin/companies/${currentCompany.id}?email=${encodeURIComponent(user.email)}`, {
+      const response = await fetch(`/api/admin/companies/${currentCompany.id}`, { // Elimina el parámetro de email
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -178,9 +186,7 @@ export default function CompanyManagementPage() {
     if (!deleteCompanyId) return;
     
     try {
-      const user = session?.user as any;
-      
-      const response = await fetch(`/api/admin/companies/${deleteCompanyId}?email=${encodeURIComponent(user.email)}`, {
+      const response = await fetch(`/api/admin/companies/${deleteCompanyId}`, { // Elimina el parámetro de email
         method: 'DELETE',
       });
       
@@ -221,6 +227,29 @@ export default function CompanyManagementPage() {
     setDeleteCompanyId(companyId);
     setIsDeleteDialogOpen(true);
   };
+
+   // Show loading while checking session
+  if (status === "loading") {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <div className="flex flex-col items-center space-y-4">
+          <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-blue-600"></div>
+          <p className="text-gray-600">Loading session...</p>
+        </div>
+      </div>
+    );
+  }
+  
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <div className="flex flex-col items-center space-y-4">
+          <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-blue-600"></div>
+          <p className="text-gray-600">Loading companies...</p>
+        </div>
+      </div>
+    );
+  }
   
   if (error) {
     return (

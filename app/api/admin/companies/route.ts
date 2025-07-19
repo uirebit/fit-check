@@ -1,174 +1,146 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextRequest, NextResponse } from 'next/server'
+import { auth } from '@/auth' // Import auth function instead of authOptions
+import { prisma } from '@/lib/prisma'
 
 export async function GET(request: NextRequest) {
   try {
-    // Get authorization token from header or cookie
-    const authHeader = request.headers.get('Authorization');
-    const token = authHeader ? authHeader.replace('Bearer ', '') : null;
-    const cookieToken = request.cookies.get('auth_token')?.value;
+    // Get session from NextAuth
+    const session = await auth() // Use auth() instead of getServerSession(authOptions)
     
-    // Use either header token or cookie token
-    const authToken = token || cookieToken;
-    
-    if (!authToken) {
+    if (!session?.user) {
       return NextResponse.json(
-        { error: "Authentication required" },
+        { error: 'Authentication required' },
         { status: 401 }
-      );
+      )
     }
+
+    const user = session.user as any
     
-    // Load user data to check admin permissions
-    const { default: prisma } = await import("@/lib/prisma");
+    // Check if user is superadmin
+    const isSuperadmin = user.isSuperadmin === true || user.userType === 1
     
-    // Try to get user email from query params
-    let email = request.nextUrl.searchParams.get('email');
-    
-    // If no email in query, try to get it from user_data in local storage via the header
-    if (!email) {
-      try {
-        // Try to get user info from authorization header
-        // In a real app, this would be a JWT decode
-        // For our simplified app, we'll use the user_data from cookies if available
-        const sessionCookie = request.cookies.get('user_session')?.value;
-        
-        if (sessionCookie) {
-          // If we have session cookie with user data, use that
-          try {
-            const sessionData = JSON.parse(decodeURIComponent(sessionCookie));
-            if (sessionData && sessionData.email) {
-              email = sessionData.email;
-            }
-          } catch (e) {
-            console.error("Failed to parse session cookie:", e);
+    if (!isSuperadmin) {
+      return NextResponse.json(
+        { error: 'Unauthorized. Superadmin access required.' },
+        { status: 403 }
+      )
+    }
+
+    // Fetch all companies with user count
+    const companies = await prisma.fc_company.findMany({
+      include: {
+        _count: {
+          select: {
+            fc_user: true
           }
         }
-      } catch (e) {
-        console.error("Error extracting user info:", e);
+      },
+      orderBy: {
+        id: 'asc'
       }
-    }
-    
-    // Check if user has admin privileges
-    let isAdmin = false;
-    
-    // If we have an email, use it to check admin status
-    if (email) {
-      const user = await prisma.fc_user.findUnique({
-        where: { email },
-        select: { user_type: true }
-      });
-      
-      isAdmin = user?.user_type === 1; // Assuming 1 is admin type
-    }
-    
-    // For development purposes: if no email found, allow access (REMOVE THIS IN PRODUCTION)
-    // This is just for testing and should be removed for real apps
-    if (!email) {
-      console.log("DEV MODE: No email found, granting admin access for testing");
-      isAdmin = true;
-    }
-    
-    if (!isAdmin) {
-      return NextResponse.json(
-        { error: "Unauthorized. Admin privileges required." },
-        { status: 403 }
-      );
-    }
-    
-    // Fetch all companies
-    const companies = await prisma.fc_company.findMany({
-      orderBy: { id: 'asc' },
-    });
-    
-    // Get user count per company
-    const companiesWithUserCount = await Promise.all(
-      companies.map(async (company) => {
-        const userCount = await prisma.fc_user.count({
-          where: { company_id: company.id }
-        });
-        
-        return {
-          ...company,
-          userCount
-        };
-      })
-    );
-    
-    return NextResponse.json(companiesWithUserCount);
-    
+    })
+
+    // Transform the data to match the frontend interface
+    const transformedCompanies = companies.map(company => ({
+      id: company.id,
+      description: company.description,
+      userCount: company._count.fc_user
+    }))
+
+    return NextResponse.json(transformedCompanies)
   } catch (error) {
-    console.error("API error:", error);
+    console.error('Error fetching companies:', error)
     return NextResponse.json(
-      { error: "Internal server error" },
+      { error: 'Internal server error' },
       { status: 500 }
-    );
+    )
   }
 }
 
 export async function POST(request: NextRequest) {
   try {
-    // Get authorization token from header or cookie
-    const authHeader = request.headers.get('Authorization');
-    const token = authHeader ? authHeader.replace('Bearer ', '') : null;
-    const cookieToken = request.cookies.get('auth_token')?.value;
+    // Get session from NextAuth
+    const session = await auth() // Use auth() instead of getServerSession(authOptions)
     
-    // Use either header token or cookie token
-    const authToken = token || cookieToken;
-    
-    if (!authToken) {
+    if (!session?.user) {
       return NextResponse.json(
-        { error: "Authentication required" },
+        { error: 'Authentication required' },
         { status: 401 }
-      );
+      )
     }
+
+    const user = session.user as any
     
-    // Load user data to check admin permissions
-    const { default: prisma } = await import("@/lib/prisma");
+    // Check if user is superadmin
+    const isSuperadmin = user.isSuperadmin === true || user.userType === 1
     
-    // In a real application, validate the token and extract the user ID
-    // Here we're assuming the user is admin
-    // In production, you would check the user's role from the token
-    
-    // Get company data from request body
-    const body = await request.json();
-    
-    if (!body.description || body.description.trim().length < 2) {
+    if (!isSuperadmin) {
       return NextResponse.json(
-        { error: "Company name is required and must be at least 2 characters" },
-        { status: 400 }
-      );
+        { error: 'Unauthorized. Superadmin access required.' },
+        { status: 403 }
+      )
     }
-    
-    // Check if company already exists
+
+    const { description } = await request.json()
+
+    if (!description || description.trim().length === 0) {
+      return NextResponse.json(
+        { error: 'Company name is required' },
+        { status: 400 }
+      )
+    }
+
+    if (description.trim().length < 2) {
+      return NextResponse.json(
+        { error: 'Company name must be at least 2 characters' },
+        { status: 400 }
+      )
+    }
+
+    // Check if company with same name already exists
     const existingCompany = await prisma.fc_company.findFirst({
       where: {
         description: {
-          equals: body.description.trim(),
+          equals: description.trim(),
           mode: 'insensitive'
         }
       }
-    });
-    
+    })
+
     if (existingCompany) {
       return NextResponse.json(
-        { error: "A company with this name already exists" },
+        { error: 'A company with this name already exists' },
         { status: 409 }
-      );
+      )
     }
-    
+
     // Create new company
     const newCompany = await prisma.fc_company.create({
       data: {
-        description: body.description.trim()
+        description: description.trim()
+      },
+      include: {
+        _count: {
+          select: {
+            fc_user: true
+          }
+        }
       }
-    });
-    
-    return NextResponse.json(newCompany, { status: 201 });
-    
+    })
+
+    // Transform the data to match the frontend interface
+    const transformedCompany = {
+      id: newCompany.id,
+      description: newCompany.description,
+      userCount: newCompany._count.fc_user
+    }
+
+    return NextResponse.json(transformedCompany, { status: 201 })
   } catch (error) {
-    console.error("API error:", error);
+    console.error('Error creating company:', error)
     return NextResponse.json(
-      { error: "Internal server error" },
+      { error: 'Internal server error' },
       { status: 500 }
-    );
+    )
   }
 }

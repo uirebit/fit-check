@@ -1,4 +1,6 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextRequest, NextResponse } from 'next/server'
+import { auth } from '@/auth'
+import { prisma } from '@/lib/prisma'
 
 export async function GET(request: NextRequest, { params }: { params: { id: string } }) {
   try {
@@ -10,78 +12,39 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
         { status: 400 }
       );
     }
+
+    // Get session from NextAuth
+    const session = await auth()
     
-    // Get authorization token from header or cookie
-    const authHeader = request.headers.get('Authorization');
-    const token = authHeader ? authHeader.replace('Bearer ', '') : null;
-    const cookieToken = request.cookies.get('auth_token')?.value;
-    
-    // Use either header token or cookie token
-    const authToken = token || cookieToken;
-    
-    if (!authToken) {
+    if (!session?.user) {
       return NextResponse.json(
-        { error: "Authentication required" },
+        { error: 'Authentication required' },
         { status: 401 }
-      );
+      )
     }
+
+    const user = session.user as any
     
-    // Load user data to check admin permissions
-    const { default: prisma } = await import("@/lib/prisma");
+    // Check if user is superadmin
+    const isSuperadmin = user.isSuperadmin === true || user.userType === 1
     
-    // Try to get user email from query params
-    let email = request.nextUrl.searchParams.get('email');
-    
-    // If no email in query, try to get it from user_data in local storage via the header
-    if (!email) {
-      try {
-        // Try to get user info from authorization header or cookies
-        const sessionCookie = request.cookies.get('user_session')?.value;
-        
-        if (sessionCookie) {
-          try {
-            const sessionData = JSON.parse(decodeURIComponent(sessionCookie));
-            if (sessionData && sessionData.email) {
-              email = sessionData.email;
-            }
-          } catch (e) {
-            console.error("Failed to parse session cookie:", e);
-          }
-        }
-      } catch (e) {
-        console.error("Error extracting user info:", e);
-      }
-    }
-    
-    // Check if user has admin privileges
-    let isAdmin = false;
-    
-    // If we have an email, use it to check admin status
-    if (email) {
-      const user = await prisma.fc_user.findUnique({
-        where: { email },
-        select: { user_type: true }
-      });
-      
-      isAdmin = user?.user_type === 1; // Assuming 1 is admin type
-    }
-    
-    // For development purposes: if no email found, allow access (REMOVE THIS IN PRODUCTION)
-    if (!email) {
-      console.log("DEV MODE: No email found, granting admin access for testing");
-      isAdmin = true;
-    }
-    
-    if (!isAdmin) {
+    if (!isSuperadmin) {
       return NextResponse.json(
-        { error: "Unauthorized. Admin privileges required." },
+        { error: 'Unauthorized. Superadmin access required.' },
         { status: 403 }
-      );
+      )
     }
-    
+
     // Fetch the company
     const company = await prisma.fc_company.findUnique({
-      where: { id: companyId }
+      where: { id: companyId },
+      include: {
+        _count: {
+          select: {
+            fc_user: true
+          }
+        }
+      }
     });
     
     if (!company) {
@@ -90,16 +53,15 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
         { status: 404 }
       );
     }
-    
-    // Get user count for the company
-    const userCount = await prisma.fc_user.count({
-      where: { company_id: company.id }
-    });
-    
-    return NextResponse.json({
-      ...company,
-      userCount
-    });
+
+    // Transform the data to match the frontend interface
+    const transformedCompany = {
+      id: company.id,
+      description: company.description,
+      userCount: company._count.fc_user
+    }
+
+    return NextResponse.json(transformedCompany);
     
   } catch (error) {
     console.error("API error:", error);
@@ -120,75 +82,29 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
         { status: 400 }
       );
     }
+
+    // Get session from NextAuth
+    const session = await auth()
     
-    // Get authorization token from header or cookie
-    const authHeader = request.headers.get('Authorization');
-    const token = authHeader ? authHeader.replace('Bearer ', '') : null;
-    const cookieToken = request.cookies.get('auth_token')?.value;
-    
-    // Use either header token or cookie token
-    const authToken = token || cookieToken;
-    
-    if (!authToken) {
+    if (!session?.user) {
       return NextResponse.json(
-        { error: "Authentication required" },
+        { error: 'Authentication required' },
         { status: 401 }
-      );
+      )
     }
+
+    const user = session.user as any
     
-    // Load prisma client
-    const { default: prisma } = await import("@/lib/prisma");
+    // Check if user is superadmin
+    const isSuperadmin = user.isSuperadmin === true || user.userType === 1
     
-    // Try to get user email from query params
-    let email = request.nextUrl.searchParams.get('email');
-    
-    // If no email in query, try to get it from user_data in local storage via the header
-    if (!email) {
-      try {
-        // Try to get user info from authorization header or cookies
-        const sessionCookie = request.cookies.get('user_session')?.value;
-        
-        if (sessionCookie) {
-          try {
-            const sessionData = JSON.parse(decodeURIComponent(sessionCookie));
-            if (sessionData && sessionData.email) {
-              email = sessionData.email;
-            }
-          } catch (e) {
-            console.error("Failed to parse session cookie:", e);
-          }
-        }
-      } catch (e) {
-        console.error("Error extracting user info:", e);
-      }
-    }
-    
-    // Check if user has admin privileges
-    let isAdmin = false;
-    
-    // If we have an email, use it to check admin status
-    if (email) {
-      const user = await prisma.fc_user.findUnique({
-        where: { email },
-        select: { user_type: true }
-      });
-      
-      isAdmin = user?.user_type === 1; // Assuming 1 is admin type
-    }
-    
-    // For development purposes: if no email found, allow access (REMOVE THIS IN PRODUCTION)
-    if (!email) {
-      console.log("DEV MODE: No email found, granting admin access for testing");
-      isAdmin = true;
-    }
-    
-    if (!isAdmin) {
+    if (!isSuperadmin) {
       return NextResponse.json(
-        { error: "Unauthorized. Admin privileges required." },
+        { error: 'Unauthorized. Superadmin access required.' },
         { status: 403 }
-      );
+      )
     }
-    
+
     // Get company data from request body
     const body = await request.json();
     
@@ -234,18 +150,24 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
       where: { id: companyId },
       data: {
         description: body.description.trim()
+      },
+      include: {
+        _count: {
+          select: {
+            fc_user: true
+          }
+        }
       }
     });
-    
-    // Get user count for the company
-    const userCount = await prisma.fc_user.count({
-      where: { company_id: updatedCompany.id }
-    });
-    
-    return NextResponse.json({
-      ...updatedCompany,
-      userCount
-    });
+
+    // Transform the data to match the frontend interface
+    const transformedCompany = {
+      id: updatedCompany.id,
+      description: updatedCompany.description,
+      userCount: updatedCompany._count.fc_user
+    }
+
+    return NextResponse.json(transformedCompany);
     
   } catch (error) {
     console.error("API error:", error);
@@ -266,75 +188,29 @@ export async function DELETE(request: NextRequest, { params }: { params: { id: s
         { status: 400 }
       );
     }
+
+    // Get session from NextAuth
+    const session = await auth()
     
-    // Get authorization token from header or cookie
-    const authHeader = request.headers.get('Authorization');
-    const token = authHeader ? authHeader.replace('Bearer ', '') : null;
-    const cookieToken = request.cookies.get('auth_token')?.value;
-    
-    // Use either header token or cookie token
-    const authToken = token || cookieToken;
-    
-    if (!authToken) {
+    if (!session?.user) {
       return NextResponse.json(
-        { error: "Authentication required" },
+        { error: 'Authentication required' },
         { status: 401 }
-      );
+      )
     }
+
+    const user = session.user as any
     
-    // Load prisma client
-    const { default: prisma } = await import("@/lib/prisma");
+    // Check if user is superadmin
+    const isSuperadmin = user.isSuperadmin === true || user.userType === 1
     
-    // Try to get user email from query params
-    let email = request.nextUrl.searchParams.get('email');
-    
-    // If no email in query, try to get it from user_data in local storage via the header
-    if (!email) {
-      try {
-        // Try to get user info from authorization header or cookies
-        const sessionCookie = request.cookies.get('user_session')?.value;
-        
-        if (sessionCookie) {
-          try {
-            const sessionData = JSON.parse(decodeURIComponent(sessionCookie));
-            if (sessionData && sessionData.email) {
-              email = sessionData.email;
-            }
-          } catch (e) {
-            console.error("Failed to parse session cookie:", e);
-          }
-        }
-      } catch (e) {
-        console.error("Error extracting user info:", e);
-      }
-    }
-    
-    // Check if user has admin privileges
-    let isAdmin = false;
-    
-    // If we have an email, use it to check admin status
-    if (email) {
-      const user = await prisma.fc_user.findUnique({
-        where: { email },
-        select: { user_type: true }
-      });
-      
-      isAdmin = user?.user_type === 1; // Assuming 1 is admin type
-    }
-    
-    // For development purposes: if no email found, allow access (REMOVE THIS IN PRODUCTION)
-    if (!email) {
-      console.log("DEV MODE: No email found, granting admin access for testing");
-      isAdmin = true;
-    }
-    
-    if (!isAdmin) {
+    if (!isSuperadmin) {
       return NextResponse.json(
-        { error: "Unauthorized. Admin privileges required." },
+        { error: 'Unauthorized. Superadmin access required.' },
         { status: 403 }
-      );
+      )
     }
-    
+
     // Check if company exists
     const existingCompany = await prisma.fc_company.findUnique({
       where: { id: companyId }

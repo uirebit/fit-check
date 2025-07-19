@@ -23,6 +23,16 @@ const ADMIN_PATHS = [
 export async function middleware(request: NextRequest) {
   const { pathname, searchParams } = request.nextUrl
 
+  // Debug: Ver todas las cookies
+  console.log('All cookies:', request.cookies.getAll().map(c => ({ name: c.name, value: c.value.substring(0, 50) + '...' })));
+  
+   // Debug: Ver específicamente la cookie de NextAuth (formato v5)
+  const sessionCookie = request.cookies.get('authjs.session-token') || 
+                       request.cookies.get('__Secure-authjs.session-token') ||
+                       request.cookies.get('next-auth.session-token') || 
+                       request.cookies.get('__Secure-next-auth.session-token');
+  console.log('Session cookie exists:', !!sessionCookie);
+
   // Check if this is a protected path (case-insensitive)
   const isProtectedPath = PROTECTED_PATHS.some(path => 
     // Make sure we check for the path after the locale
@@ -43,8 +53,19 @@ export async function middleware(request: NextRequest) {
       req: request,
       secret: process.env.NEXTAUTH_SECRET || "your-default-secret-do-not-use-in-production"
     });
+
+    // Debug: Ver el contenido del token
+    console.log('Token debug:', {
+      hasToken: !!token,
+      pathname,
+      userEmail: token?.email,
+      userType: token?.userType,
+      isSuperadmin: token?.isSuperadmin,
+      cookieExists: !!sessionCookie
+    });    
     
     if (!token) {
+      console.log('No token found - redirecting to login');
       // No session found
       if (isRootWithLocale) {
         // Allow access to root path for login
@@ -67,12 +88,22 @@ export async function middleware(request: NextRequest) {
     );
     
     if (isAdminPath) {
+      console.log('Admin path check:', {
+        pathname,
+        userType,
+        isSuperadmin,
+        isAdmin,
+        hasAccess: userType === 1 || userType === 2 || isAdmin === true || isSuperadmin === true
+      });
+
       // Admin access is granted to userType 1 (superadmin) or 2 (admin), or if isAdmin/isSuperadmin flags are true
       if (!(userType === 1 || userType === 2 || isAdmin === true || isSuperadmin === true)) {
         // User doesn't have admin privileges, redirect to dashboard
+        console.log('Access denied - redirecting to dashboard');
         return NextResponse.redirect(new URL(`/${redirectLocale}/dashboard`, request.url));
       }
       // User has admin privileges, allow access to admin routes
+      console.log('Access granted to admin path');
       return NextResponse.next();
     }
     

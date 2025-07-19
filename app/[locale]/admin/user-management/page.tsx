@@ -3,7 +3,7 @@
 import { useEffect, useState, useRef } from "react"
 import { useRouter } from "next/navigation"
 import { useLanguage } from "@/contexts/language-context"
-import { useAuth } from "@/hooks/use-auth"
+import { useSession } from "next-auth/react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Table, TableBody, TableCaption, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
@@ -45,6 +45,7 @@ interface FiltersData {
 export default function UserManagementPage() {
   const { t, language } = useLanguage();
   const router = useRouter();
+  const { data: session, status } = useSession()
 
   const [users, setUsers] = useState<UserData[]>([]);
   const [companies, setCompanies] = useState<CompanyData[]>([]);
@@ -69,25 +70,40 @@ export default function UserManagementPage() {
   // Track if filters have been manually changed
   const [shouldFetchData, setShouldFetchData] = useState(true);
   
-  // Get user auth state from NextAuth
-  const { user, isAuthenticated, isLoading: authLoading } = useAuth();
-  
   useEffect(() => {
     async function fetchUsers() {
       try {
         setIsLoading(true);
         setError(null);
         
-        // Check if user is authenticated and has admin privileges
-        if (!isAuthenticated || !user) {
+         // Check if session is still loading
+        if (status === "loading") {
+          console.log('Session still loading...');
+          return;
+        }
+
+        // Check if user is authenticated
+        if (status === "unauthenticated" || !session?.user) {
+          console.log('User not authenticated, session status:', status);
           setError(t('admin.unauthorized'));
-          setIsLoading(false);
+          setTimeout(() => {
+            router.push(`/${language}`);
+          }, 2000);
           return;
         }
         
-        if (!(user.isAdmin || user.isSuperadmin || user.userType === 1 || user.userType === 2)) {
+        const user = session.user as any;
+
+        // Check if user has admin privileges
+        const isAdmin = user.isAdmin === true || user.userType === 2;
+        const isSuperadmin = user.isSuperadmin === true || user.userType === 1;
+        
+        if (!(isAdmin || isSuperadmin)) {
+          console.log('User lacks admin privileges:', { userType: user.userType, isAdmin: user.isAdmin, isSuperadmin: user.isSuperadmin });
           setError(t('admin.unauthorized'));
-          setIsLoading(false);
+          setTimeout(() => {
+            router.push(`/${language}/dashboard`);
+          }, 2000);
           return;
         }
         
@@ -108,27 +124,25 @@ export default function UserManagementPage() {
         
         const urlWithParams = params.toString() ? `${url}?${params.toString()}` : url;
         
-        const response = await fetch(urlWithParams, {
-          credentials: 'include'
-        });
+        const response = await fetch(urlWithParams);
 
         if (response.status === 403) {
           setError(t('admin.unauthorized'));
-          setIsLoading(false);
           return;
         }
 
         if (!response.ok) {
-          throw new Error('Failed to fetch users');
+          const errorData = await response.json();
+          throw new Error(errorData.error || 'Failed to fetch users');
         }
 
         const data = await response.json();
+        console.log('Users fetched successfully:', data.users.length, 'users');
         setUsers(data.users);
         setCompanies(data.companies);
         setUserTypes(data.userTypes);
         
         // Don't update filters from API response to avoid re-render loop
-        // Only set the filters on first load
         if (isFirstRender.current) {
           isFirstRender.current = false;
         }
@@ -147,7 +161,7 @@ export default function UserManagementPage() {
     if (shouldFetchData) {
       fetchUsers();
     }
-  }, [t, language, filters, shouldFetchData]);
+  }, [session, status, t, language, filters, shouldFetchData, router]);
 
   const handleFilterChange = (type: 'company' | 'userType', value: string) => {
     if (type === 'company') {
@@ -185,6 +199,7 @@ export default function UserManagementPage() {
     setSaveSuccess(false);
   };
 
+  // Resto de funciones permanecen igual excepto handleSaveUserType:
   const handleSaveUserType = async () => {
     if (!selectedUser || !newUserType) return;
     
@@ -192,18 +207,11 @@ export default function UserManagementPage() {
       setIsSaving(true);
       setSaveSuccess(false);
       
-      const token = localStorage.getItem('auth_token') || '';
-      const email = localStorage.getItem('user_data') ? 
-        JSON.parse(localStorage.getItem('user_data') || '{}').email : null;
-      
-      let url = `/api/admin/users/${selectedUser.id}`;
-      if (email) url += `?email=${encodeURIComponent(email)}`;
-      
-      const response = await fetch(url, {
-        method: 'PATCH',
+      // Eliminar toda la lógica de tokens y usar NextAuth
+      const response = await fetch(`/api/admin/users/${selectedUser.id}`, { // Eliminar parámetros de email
+        method: 'PUT', // Cambiar de PATCH a PUT para coincidir con la API
         headers: {
           'Content-Type': 'application/json',
-          Authorization: token ? `Bearer ${token}` : '',
         },
         body: JSON.stringify({
           userType: parseInt(newUserType)
@@ -211,7 +219,8 @@ export default function UserManagementPage() {
       });
 
       if (!response.ok) {
-        throw new Error('Failed to update user type');
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to update user type');
       }
 
       const data = await response.json();
@@ -240,11 +249,23 @@ export default function UserManagementPage() {
       
     } catch (err) {
       console.error('Error updating user type:', err);
-      setError(t('admin.users.failedToUpdateUserType'));
+      setError(err instanceof Error ? err.message : t('admin.users.failedToUpdateUserType'));
     } finally {
       setIsSaving(false);
     }
   };
+
+  // Añadir loading específico para sesión
+  if (status === "loading") {
+    return (
+      <div className="flex h-screen items-center justify-center">
+        <div className="flex flex-col items-center space-y-4">
+          <Loader2 className="h-8 w-8 animate-spin text-blue-500" />
+          <p className="text-gray-600">Loading session...</p>
+        </div>
+      </div>
+    );
+  }
 
   if (isLoading) {
     return (

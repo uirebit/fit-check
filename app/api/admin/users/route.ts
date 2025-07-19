@@ -1,4 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
+import { auth } from '@/auth'
+import { prisma } from '@/lib/prisma'
 
 /**
  * GET endpoint to fetch all users
@@ -6,68 +8,26 @@ import { NextRequest, NextResponse } from "next/server";
  */
 export async function GET(request: NextRequest) {
   try {
-    // Get authorization token from header or cookie
-    const authHeader = request.headers.get('Authorization');
-    const token = authHeader ? authHeader.replace('Bearer ', '') : null;
-    const cookieToken = request.cookies.get('auth_token')?.value;
+    // Get session from NextAuth
+    const session = await auth()
     
-    // Use either header token or cookie token
-    const authToken = token || cookieToken;
-    
-    if (!authToken) {
+    if (!session?.user) {
       return NextResponse.json(
-        { error: "Authentication required" },
+        { error: 'Authentication required' },
         { status: 401 }
-      );
+      )
     }
+
+    const user = session.user as any
     
-    // Load user data to check superadmin permissions
-    const { default: prisma } = await import("@/lib/prisma");
-    
-    // Try to get user email from query params
-    let email = request.nextUrl.searchParams.get('email');
-    
-    // If no email in query, try to get it from user_data in local storage via the header
-    if (!email) {
-      try {
-        // Try to get user info from authorization header or cookie
-        const sessionCookie = request.cookies.get('user_session')?.value;
-        
-        if (sessionCookie) {
-          // If we have session cookie with user data, use that
-          try {
-            const sessionData = JSON.parse(decodeURIComponent(sessionCookie));
-            if (sessionData && sessionData.email) {
-              email = sessionData.email;
-            }
-          } catch (e) {
-            console.error("Failed to parse session cookie:", e);
-          }
-        }
-      } catch (e) {
-        console.error("Error extracting user info:", e);
-      }
-    }
-    
-    // Check if user has superadmin privileges
-    let isSuperadmin = false;
-    
-    // If we have an email, use it to check superadmin status
-    if (email) {
-      const user = await prisma.fc_user.findUnique({
-        where: { email },
-        select: { user_type: true }
-      });
-      
-      // Only userType 1 (superadmin) can manage users
-      isSuperadmin = user?.user_type === 1;
-    }
+    // Check if user is superadmin
+    const isSuperadmin = user.isSuperadmin === true || user.userType === 1
     
     if (!isSuperadmin) {
       return NextResponse.json(
-        { error: "Unauthorized. Superadmin privileges required." },
+        { error: 'Unauthorized. Superadmin privileges required.' },
         { status: 403 }
-      );
+      )
     }
     
     // Get filters from query params
@@ -157,6 +117,134 @@ export async function GET(request: NextRequest) {
       }
     });
     
+  } catch (error) {
+    console.error("API error:", error);
+    return NextResponse.json(
+      { error: "Internal server error" },
+      { status: 500 }
+    );
+  }
+}
+
+/**
+ * PUT endpoint to update user type
+ */
+export async function PUT(request: NextRequest) {
+  try {
+    // Get session from NextAuth
+    const session = await auth()
+    
+    if (!session?.user) {
+      return NextResponse.json(
+        { error: 'Authentication required' },
+        { status: 401 }
+      )
+    }
+
+    const user = session.user as any
+    
+    // Check if user is superadmin
+    const isSuperadmin = user.isSuperadmin === true || user.userType === 1
+    
+    if (!isSuperadmin) {
+      return NextResponse.json(
+        { error: 'Unauthorized. Superadmin privileges required.' },
+        { status: 403 }
+      )
+    }
+
+    const body = await request.json();
+    const { userId, userType } = body;
+
+    if (!userId || userType === undefined) {
+      return NextResponse.json(
+        { error: "User ID and user type are required" },
+        { status: 400 }
+      );
+    }
+
+    // Validate userType
+    if (![1, 2, 3].includes(userType)) {
+      return NextResponse.json(
+        { error: "Invalid user type. Must be 1 (Superadmin), 2 (Admin), or 3 (Employee)" },
+        { status: 400 }
+      );
+    }
+
+    // Check if target user exists
+    const targetUser = await prisma.fc_user.findUnique({
+      where: { id: userId },
+      select: { 
+        id: true, 
+        email: true, 
+        user_type: true,
+        username: true
+      }
+    });
+
+    if (!targetUser) {
+      return NextResponse.json(
+        { error: "User not found" },
+        { status: 404 }
+      );
+    }
+
+    // Prevent changing another superadmin's type (only superadmins can change types)
+    if (targetUser.user_type === 1 && targetUser.email !== user.email) {
+      return NextResponse.json(
+        { error: "Cannot modify another superadmin's user type" },
+        { status: 403 }
+      );
+    }
+
+    // Update user type
+    const updatedUser = await prisma.fc_user.update({
+      where: { id: userId },
+      data: { user_type: userType },
+      select: {
+        id: true,
+        username: true,
+        email: true,
+        company_id: true,
+        user_type: true,
+        creation_date: true,
+        is_male: true,
+        fc_company: {
+          select: {
+            id: true,
+            description: true
+          }
+        },
+        fc_user_type: {
+          select: {
+            id: true,
+            description: true
+          }
+        }
+      }
+    });
+
+    // Format user for response
+    const formattedUser = {
+      id: updatedUser.id,
+      name: updatedUser.username,
+      email: updatedUser.email,
+      companyId: updatedUser.company_id,
+      companyName: updatedUser.fc_company?.description || null,
+      userType: updatedUser.user_type,
+      userTypeName: updatedUser.fc_user_type?.description || null,
+      joinDate: updatedUser.creation_date,
+      gender: updatedUser.is_male ? 'male' : 'female',
+      isSuperadmin: updatedUser.user_type === 1,
+      isAdmin: updatedUser.user_type === 1 || updatedUser.user_type === 2
+    };
+
+    return NextResponse.json({
+      success: true,
+      message: "User type updated successfully",
+      user: formattedUser
+    });
+
   } catch (error) {
     console.error("API error:", error);
     return NextResponse.json(
