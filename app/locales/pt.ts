@@ -5,6 +5,7 @@ const pt = {
     "header.addSizes": "Adicionar Tamanhos",
     "header.settings": "Configurações",
     "header.signOut": "Sair",
+    "header.returndashboard": "Voltar ao Dashboard",
 
     // Main page
     "main.title": "Gerencie os Tamanhos da sua Roupa de Trabalho",

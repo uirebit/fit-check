@@ -29,7 +29,10 @@ export async function middleware(request: NextRequest) {
     pathname.replace(/^\/[a-z]{2}/, '').startsWith(path)
   );
   
-  if (isProtectedPath) {
+  // Check if this is the root path with locale (e.g., /es/, /en/, /pt/)
+  const isRootWithLocale = /^\/[a-z]{2}\/?$/.test(pathname);
+  
+  if (isProtectedPath || isRootWithLocale) {
     // Get locale from URL (for redirect purposes)
     const locale = pathname.split('/')[1];
     const isValidLocale = PUBLIC_LOCALES.includes(locale);
@@ -42,15 +45,55 @@ export async function middleware(request: NextRequest) {
     });
     
     if (!token) {
-      // No session found, redirect to login page with the same locale (root page with auth form)
+      // No session found
+      if (isRootWithLocale) {
+        // Allow access to root path for login
+        return NextResponse.next();
+      }
+      // Redirect to login page for protected paths
       return NextResponse.redirect(new URL(`/${redirectLocale}`, request.url));
     }
     
-    // Check if user needs onboarding (except for superadmins and if already on onboarding page)
-    const isOnboardingPath = pathname.replace(/^\/[a-z]{2}/, '').startsWith('/onboarding');
+    // User is authenticated - extract token data
     const companyId = token.companyId as string | null | undefined;
     const gender = token.gender as string | null | undefined;
     const isSuperadmin = token.isSuperadmin as boolean | undefined;
+    const userType = token.userType as number | undefined;
+    const isAdmin = token.isAdmin as boolean | undefined;
+    
+    // Check for admin paths first (before onboarding check)
+    const isAdminPath = ADMIN_PATHS.some(path => 
+      pathname.replace(/^\/[a-z]{2}/, '').startsWith(path)
+    );
+    
+    if (isAdminPath) {
+      // Admin access is granted to userType 1 (superadmin) or 2 (admin), or if isAdmin/isSuperadmin flags are true
+      if (!(userType === 1 || userType === 2 || isAdmin === true || isSuperadmin === true)) {
+        // User doesn't have admin privileges, redirect to dashboard
+        return NextResponse.redirect(new URL(`/${redirectLocale}/dashboard`, request.url));
+      }
+      // User has admin privileges, allow access to admin routes
+      return NextResponse.next();
+    }
+    
+    // Check if they're trying to access root/login page
+    if (isRootWithLocale) {
+      // If user is superadmin, redirect to dashboard
+      if (isSuperadmin) {
+        return NextResponse.redirect(new URL(`/${redirectLocale}/dashboard`, request.url));
+      }
+      
+      // If user needs onboarding (missing company or gender), redirect to onboarding
+      if (!companyId || !gender) {
+        return NextResponse.redirect(new URL(`/${redirectLocale}/onboarding`, request.url));
+      }
+      
+      // User is complete, redirect to dashboard
+      return NextResponse.redirect(new URL(`/${redirectLocale}/dashboard`, request.url));
+    }
+    
+    // Handle other protected paths
+    const isOnboardingPath = pathname.replace(/^\/[a-z]{2}/, '').startsWith('/onboarding');
     
     // Check if onboarding was just completed (indicated by query parameter)
     const onboardingCompleted = searchParams.get('onboarding-completed') === 'true';
@@ -59,9 +102,12 @@ export async function middleware(request: NextRequest) {
     console.log('Middleware check:', {
       pathname,
       isOnboardingPath,
+      isAdminPath,
       companyId,
       gender,
       isSuperadmin,
+      userType,
+      isAdmin,
       onboardingCompleted,
       needsOnboarding: !companyId || !gender
     });
@@ -72,8 +118,13 @@ export async function middleware(request: NextRequest) {
       return NextResponse.next();
     }
     
-    // Redirect to onboarding if user doesn't have companyId or gender (unless they're superadmin or already on onboarding)
-    if (!isSuperadmin && !isOnboardingPath && (!companyId || !gender)) {
+    // For superadmins, skip onboarding requirements (they can access everything)
+    if (isSuperadmin) {
+      return NextResponse.next();
+    }
+    
+    // Redirect to onboarding if user doesn't have companyId or gender (unless already on onboarding)
+    if (!isOnboardingPath && (!companyId || !gender)) {
       console.log('Redirecting to onboarding');
       return NextResponse.redirect(new URL(`/${redirectLocale}/onboarding`, request.url));
     }
@@ -82,24 +133,6 @@ export async function middleware(request: NextRequest) {
     if (isOnboardingPath && companyId && gender) {
       console.log('Redirecting to dashboard from onboarding');
       return NextResponse.redirect(new URL(`/${redirectLocale}/dashboard`, request.url));
-    }
-    
-    // Check for admin paths
-    const isAdminPath = ADMIN_PATHS.some(path => 
-      pathname.replace(/^\/[a-z]{2}/, '').startsWith(path)
-    );
-    
-    if (isAdminPath) {
-      // Check if user has admin privileges
-      const userType = token.userType as number | undefined;
-      const isAdmin = token.isAdmin as boolean | undefined;
-      const isSuperadmin = token.isSuperadmin as boolean | undefined;
-      
-      // Admin access is granted to userType 1 (superadmin) or 2 (admin), or if isAdmin/isSuperadmin flags are true
-      if (!(userType === 1 || userType === 2 || isAdmin === true || isSuperadmin === true)) {
-        // User doesn't have admin privileges, redirect to dashboard
-        return NextResponse.redirect(new URL(`/${redirectLocale}/dashboard`, request.url));
-      }
     }
   }
   

@@ -11,6 +11,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { useLanguage } from "@/contexts/language-context"
 import { useRouter } from "next/navigation"
+import { useSession } from "next-auth/react" // Add this import
 import { Zap, ArrowLeft, Plus, Pencil, Trash2, AlertCircle } from "lucide-react"
 
 interface Company {
@@ -22,6 +23,7 @@ interface Company {
 export default function CompanyManagementPage() {
   const { t, language } = useLanguage();
   const router = useRouter();
+  const { data: session, status } = useSession(); // Add this line
   const [companies, setCompanies] = useState<Company[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -45,11 +47,13 @@ export default function CompanyManagementPage() {
         setLoading(true);
         setError(null);
         
-        // First, check if user is admin
-        const token = localStorage.getItem("auth_token") || sessionStorage.getItem("auth_token");
-        const userData = localStorage.getItem("user_data");
+        // Check if session is still loading
+        if (status === "loading") {
+          return;
+        }
         
-        if (!userData || !token) {
+        // Check if user is authenticated
+        if (status === "unauthenticated" || !session?.user) {
           setError("Authentication required");
           setTimeout(() => {
             router.push(`/${language}`);
@@ -57,13 +61,12 @@ export default function CompanyManagementPage() {
           return;
         }
         
-        // Parse user data to check admin role
-        const user = JSON.parse(userData);
+        const user = session.user as any;
         
         // Check if user is superadmin (user_type = 1 is superadmin)
         const isSuperadmin = user.isSuperadmin === true || user.userType === 1;
         
-        if (!user || !isSuperadmin) {
+        if (!isSuperadmin) {
           setIsAdmin(false);
           setError(t("admin.unauthorizedSuperadmin") || "Only superadmins can access this page");
           setTimeout(() => {
@@ -74,12 +77,8 @@ export default function CompanyManagementPage() {
         
         setIsAdmin(true);
         
-        // Fetch companies from API
-        const response = await fetch(`/api/admin/companies?email=${encodeURIComponent(user.email)}`, {
-          headers: {
-            Authorization: `Bearer ${token}`
-          }
-        });
+         // Fetch companies from API
+        const response = await fetch(`/api/admin/companies?email=${encodeURIComponent(user.email)}`);
         
         if (!response.ok) {
           throw new Error(`Failed to fetch companies: ${response.statusText}`);
@@ -105,16 +104,12 @@ export default function CompanyManagementPage() {
     }
     
     try {
-      const token = localStorage.getItem("auth_token") || sessionStorage.getItem("auth_token");
+       const user = session?.user as any;
       
-      const userData = JSON.parse(localStorage.getItem('user_data') || '{}');
-      const email = userData.email;
-      
-      const response = await fetch(`/api/admin/companies?email=${encodeURIComponent(email)}`, {
+      const response = await fetch(`/api/admin/companies?email=${encodeURIComponent(user.email)}`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`
         },
         body: JSON.stringify({ description: companyName })
       });
@@ -146,16 +141,12 @@ export default function CompanyManagementPage() {
     }
     
     try {
-      const token = localStorage.getItem("auth_token") || sessionStorage.getItem("auth_token");
+      const user = session?.user as any;
       
-      const userData = JSON.parse(localStorage.getItem('user_data') || '{}');
-      const email = userData.email;
-      
-      const response = await fetch(`/api/admin/companies/${currentCompany.id}?email=${encodeURIComponent(email)}`, {
+      const response = await fetch(`/api/admin/companies/${currentCompany.id}?email=${encodeURIComponent(user.email)}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`
         },
         body: JSON.stringify({ description: companyName })
       });
@@ -187,16 +178,10 @@ export default function CompanyManagementPage() {
     if (!deleteCompanyId) return;
     
     try {
-      const token = localStorage.getItem("auth_token") || sessionStorage.getItem("auth_token");
+      const user = session?.user as any;
       
-      const userData = JSON.parse(localStorage.getItem('user_data') || '{}');
-      const email = userData.email;
-      
-      const response = await fetch(`/api/admin/companies/${deleteCompanyId}?email=${encodeURIComponent(email)}`, {
+      const response = await fetch(`/api/admin/companies/${deleteCompanyId}?email=${encodeURIComponent(user.email)}`, {
         method: 'DELETE',
-        headers: {
-          Authorization: `Bearer ${token}`
-        }
       });
       
       if (!response.ok) {

@@ -7,6 +7,7 @@ const en = {
     "header.addSizes": "Add Sizes",
     "header.settings": "Settings",
     "header.signOut": "Sign Out",
+    "header.returndashboard": "Return to Dashboard",
 
     // Main page
     "main.title": "Manage Your Work Clothing Sizes",

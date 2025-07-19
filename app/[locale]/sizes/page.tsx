@@ -4,7 +4,7 @@ import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Badge } from "@/components/ui/badge"
+import { ArrowLeft } from "lucide-react"
 import { ClothingMeasurement } from "@/components/clothing-measurement"
 import { SavedSizes } from "@/components/saved-sizes"
 import { Zap, User, Settings, LogOut, Ruler, Save, AlertCircle } from "lucide-react"
@@ -23,7 +23,7 @@ export default function SizesPage() {
   const [clothingTypes, setClothingTypes] = useState<ClothingItem[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)  
-  const { t } = useLanguage() // Get translations
+  const { t, language } = useLanguage() // Get translations
   
   
   // Get user data from NextAuth session
@@ -149,6 +149,14 @@ export default function SizesPage() {
               <span className="text-2xl font-bold text-gray-900">{t("header.title")}</span>
             </div>
             <div className="flex items-center space-x-4">
+               <Button 
+                  variant="ghost" 
+                  size="sm" 
+                  onClick={() => window.location.href = `/${language}/dashboard`}
+                >
+                <ArrowLeft className="h-4 w-4 mr-2" />
+                {t("header.returndashboard")}
+              </Button>
               <Button variant="ghost" size="sm" onClick={() => setShowSaved(!showSaved)}>
                 <Save className="h-4 w-4 mr-2" />
                 {showSaved ? t("header.addSizes") : t("header.savedSizes")}
@@ -162,7 +170,7 @@ export default function SizesPage() {
               <Button 
                 variant="ghost" 
                 size="sm" 
-                onClick={() => window.location.href = `/${t("locale") || "en"}/settings`}
+                onClick={() => window.location.href = `/${language}/settings`}
               >
                 <Settings className="h-4 w-4 mr-2" />
                 {t("header.settings")}
