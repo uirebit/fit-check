@@ -41,7 +41,11 @@ export async function GET(request: NextRequest) {
     })
 
     // Transform the data to match the frontend interface
-    const transformedCompanies = companies.map(company => ({
+    const transformedCompanies = companies.map((company: {
+      id: number
+      description: string
+      _count: { fc_user: number }
+    }) => ({
       id: company.id,
       description: company.description,
       userCount: company._count.fc_user
