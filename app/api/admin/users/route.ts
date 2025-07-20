@@ -93,7 +93,25 @@ export async function GET(request: NextRequest) {
     });
     
     // Format users for response
-    const formattedUsers = users.map(user => ({
+    type UserType = {
+      id: number;
+      username: string;
+      email: string;
+      company_id: number | null;
+      user_type: number;
+      creation_date: Date;
+      is_male: boolean | null;
+      fc_company?: {
+        id: number;
+        description: string;
+      } | null;
+      fc_user_type?: {
+        id: number;
+        description: string;
+      } | null;
+    };
+
+    const formattedUsers = users.map((user: UserType) => ({
       id: user.id,
       name: user.username,
       email: user.email,
