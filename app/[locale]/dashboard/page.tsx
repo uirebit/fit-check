@@ -115,13 +115,13 @@ export default function DashboardPage() {
       {/* Header */}
       <header className="bg-white shadow-sm border-b">
         <div className="container mx-auto px-4 py-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-2">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
+            <div className="flex items-center space-x-2 mb-4 sm:mb-0">
               <Zap className="h-8 w-8 text-blue-600" />
               <span className="text-2xl font-bold text-gray-900">{t("header.title")}</span>
             </div>
-            <div className="flex items-center space-x-4">
-              <div className="flex items-center space-x-2">
+            <div className="flex flex-wrap gap-2 items-center">
+              <div className="flex items-center space-x-2 flex-shrink-0 mr-2">
                 {userData.picture ? (
                   <div className="w-8 h-8 rounded-full overflow-hidden">
                     <img 
@@ -135,7 +135,7 @@ export default function DashboardPage() {
                     <User className="h-4 w-4 text-blue-600" />
                   </div>
                 )}
-                <span className="text-sm font-medium">
+                <span className="text-xs sm:text-sm font-medium truncate max-w-[80px] sm:max-w-none">
                   {userData.isLoading ? "..." : userData.name}
                 </span>
               </div>
@@ -143,13 +143,19 @@ export default function DashboardPage() {
                 variant="ghost" 
                 size="sm" 
                 onClick={() => router.push(`/${language}/settings`)}
+                className="flex-shrink-0"
               >
-                <Settings className="h-4 w-4 mr-2" />
-                {t("header.settings")}
+                <Settings className="h-4 w-4 sm:mr-2" />
+                <span className="hidden sm:inline">{t("header.settings")}</span>
               </Button>
-              <Button variant="ghost" size="sm" onClick={handleSignOut}>
-                <LogOut className="h-4 w-4 mr-2" />
-                {t("header.signOut")}
+              <Button 
+                variant="ghost" 
+                size="sm" 
+                onClick={handleSignOut}
+                className="flex-shrink-0"
+              >
+                <LogOut className="h-4 w-4 sm:mr-2" />
+                <span className="hidden sm:inline">{t("header.signOut")}</span>
               </Button>
             </div>
           </div>
@@ -179,95 +185,97 @@ export default function DashboardPage() {
 
             {/* User Info Card */}
             <div className="mb-8">
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center">
-                    <User className="h-5 w-5 mr-2 text-blue-600" />
+              <Card className="overflow-hidden">
+                <CardHeader className="pb-3">
+                  <CardTitle className="flex items-center text-base sm:text-lg">
+                    <User className="h-4 w-4 sm:h-5 sm:w-5 mr-2 text-blue-600" />
                     {t("dashboard.profileInformation")}
                   </CardTitle>
-                  <CardDescription>{t("dashboard.accountDetails")}</CardDescription>
+                  <CardDescription className="text-xs sm:text-sm">{t("dashboard.accountDetails")}</CardDescription>
                 </CardHeader>
                 <CardContent>
-                  <div className="grid md:grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <p className="text-sm font-medium text-gray-500">{t("login.form.email")}</p>
-                      <p className="text-gray-900">{userData.email}</p>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div className="space-y-1 sm:space-y-2">
+                      <p className="text-xs sm:text-sm font-medium text-gray-500">{t("login.form.email")}</p>
+                      <p className="text-xs sm:text-sm text-gray-900 break-all">{userData.email}</p>
                     </div>
                     
                     {/* Mostrar compañía solo si NO es superadmin */}
                     {!userData.isSuperadmin && userData.userType !== 1 && (
-                      <div className="space-y-2">
-                        <p className="text-sm font-medium text-gray-500">{t("onboarding.companyName")}</p>
-                        <div className="flex items-center space-x-2">
-                          <Badge variant="secondary">{userData.companyName && userData.companyName !== "N/A" ? userData.companyName : t("dashboard.noCompany")}</Badge>
+                      <div className="space-y-1 sm:space-y-2">
+                        <p className="text-xs sm:text-sm font-medium text-gray-500">{t("onboarding.companyName")}</p>
+                        <div className="flex items-center">
+                          <Badge variant="secondary" className="text-xs sm:text-sm max-w-full truncate">
+                            {userData.companyName && userData.companyName !== "N/A" ? userData.companyName : t("dashboard.noCompany")}
+                          </Badge>
                         </div>
                       </div>
                     )}
                     
                     {/* Mostrar tipo de usuario para todos */}
-                    <div className="space-y-2">
-                      <p className="text-sm font-medium text-gray-500">{t("dashboard.userType")}</p>
-                      <div className="flex items-center space-x-2">
+                    <div className="space-y-1 sm:space-y-2">
+                      <p className="text-xs sm:text-sm font-medium text-gray-500">{t("dashboard.userType")}</p>
+                      <div className="flex items-center">
                         {userData.userType === 1 || userData.isSuperadmin ? (
-                          <Badge variant="default" className="bg-blue-500">{t("admin.users.superadmin")}</Badge>
+                          <Badge variant="default" className="bg-blue-500 text-xs sm:text-sm">{t("admin.users.superadmin")}</Badge>
                         ) : userData.userType === 2 || userData.isAdmin ? (
-                          <Badge variant="secondary">{t("admin.users.admin")}</Badge>
+                          <Badge variant="secondary" className="text-xs sm:text-sm">{t("admin.users.admin")}</Badge>
                         ) : (
-                          <Badge variant="outline">{t("admin.users.employee")}</Badge>
+                          <Badge variant="outline" className="text-xs sm:text-sm">{t("admin.users.employee")}</Badge>
                         )}
                       </div>
                     </div>
                     
                     {/* Mostrar género solo si se tiene disponible */}
                     {userData.gender && (
-                      <div className="space-y-2">
-                        <p className="text-sm font-medium text-gray-500">{t("onboarding.gender")}</p>
-                        <p className="text-gray-900">{userData.gender}</p>
+                      <div className="space-y-1 sm:space-y-2">
+                        <p className="text-xs sm:text-sm font-medium text-gray-500">{t("onboarding.gender")}</p>
+                        <p className="text-xs sm:text-sm text-gray-900">{userData.gender}</p>
                       </div>
                     )}
                     
-                    <div className="space-y-2">
-                      <p className="text-sm font-medium text-gray-500">{t("dashboard.memberSince")}</p>
-                      <p className="text-gray-900">{new Date(userData.joinDate).toLocaleDateString()}</p>
+                    <div className="space-y-1 sm:space-y-2">
+                      <p className="text-xs sm:text-sm font-medium text-gray-500">{t("dashboard.memberSince")}</p>
+                      <p className="text-xs sm:text-sm text-gray-900">{new Date(userData.joinDate).toLocaleDateString()}</p>
                     </div>
                   </div>
                 </CardContent>
               </Card>
             </div>
 
-            <div className={`grid ${(!userData.isSuperadmin && userData.userType !== 1) ? 'md:grid-cols-2' : 'md:grid-cols-1'} gap-6`}>
+            <div className={`grid grid-cols-1 ${(!userData.isSuperadmin && userData.userType !== 1) ? 'md:grid-cols-2' : 'md:grid-cols-1'} gap-6`}>
               {/* Mostrar tarjeta de tallas solo si NO es superadmin */}
               {!userData.isSuperadmin && userData.userType !== 1 && (
-                <Card>
+                <Card className="overflow-hidden">
                   <CardHeader>
-                    <CardTitle className="flex items-center">
-                      <Ruler className="h-5 w-5 mr-2 text-blue-600" />
+                    <CardTitle className="flex items-center text-base sm:text-lg">
+                      <Ruler className="h-4 w-4 sm:h-5 sm:w-5 mr-2 text-blue-600" />
                       {t("dashboard.clothingSizes")}
                     </CardTitle>
-                    <CardDescription>{t("dashboard.manageSizesDesc")}</CardDescription>
+                    <CardDescription className="text-xs sm:text-sm">{t("dashboard.manageSizesDesc")}</CardDescription>
                   </CardHeader>
                   <CardContent className="space-y-4">
                     <Link href={`/${userData.language}/sizes`}>
-                      <Button className="w-full">{t("dashboard.manageSizes")}</Button>
+                      <Button className="w-full text-sm">{t("dashboard.manageSizes")}</Button>
                     </Link>
                     
                     {/* Mostrar botón de exportar medidas solo para administradores */}
                     {(userData.isAdmin || userData.userType === 2) && (
                       <div className="mt-2">
-                        <ExportMeasurementsButton className="w-full" />
+                        <ExportMeasurementsButton className="w-full text-sm" />
                       </div>
                     )}
                   </CardContent>
                 </Card>
               )}
 
-              <Card>
+              <Card className="overflow-hidden">
                 <CardHeader>
-                  <CardTitle className="flex items-center">
-                    <Settings className="h-5 w-5 mr-2 text-gray-600" />
+                  <CardTitle className="flex items-center text-base sm:text-lg">
+                    <Settings className="h-4 w-4 sm:h-5 sm:w-5 mr-2 text-gray-600" />
                     {t("dashboard.accountSettings")}
                   </CardTitle>
-                  <CardDescription>{t("dashboard.updateProfile")}</CardDescription>
+                  <CardDescription className="text-xs sm:text-sm">{t("dashboard.updateProfile")}</CardDescription>
                 </CardHeader>
                 <CardContent>
                   <div className="space-y-4">
@@ -275,13 +283,13 @@ export default function DashboardPage() {
                     {(userData.isSuperadmin === true || userData.userType === 1) && (
                       <>
                         <Button 
-                          className="w-full mb-2" 
+                          className="w-full mb-2 text-sm" 
                           onClick={() => router.push(`/${userData.language || language}/admin/company-management`)}
                         >
                           {t("admin.companies.manage")}
                         </Button>
                         <Button 
-                          className="w-full" 
+                          className="w-full text-sm" 
                           onClick={() => router.push(`/${userData.language || language}/admin/user-management`)}
                         >
                           {t("admin.users.manage")}
@@ -292,7 +300,7 @@ export default function DashboardPage() {
                     {/* Company admins can manage clothing items for their company */}
                     {(userData.isAdmin === true || userData.userType === 1 || userData.userType === 2) && !userData.isSuperadmin && (
                       <Button 
-                        className="w-full"
+                        className="w-full text-sm"
                         variant="secondary"
                         onClick={() => router.push(`/${userData.language || language}/admin/company-cloth-management`)}
                       >
@@ -302,7 +310,7 @@ export default function DashboardPage() {
                     
                     {/* Account settings button */}
                     <Button 
-                      className="w-full" 
+                      className="w-full text-sm" 
                       variant="outline" 
                       onClick={() => router.push(`/${userData.language || language}/settings`)}
                     >
