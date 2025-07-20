@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server"
 import type { NextRequest } from "next/server"
 import { getToken } from "next-auth/jwt";
+import { getEnv } from "./env"
 
 const PUBLIC_LOCALES = ["en", "es", "pt"]
 const DEFAULT_LOCALE = "en"
@@ -51,7 +52,7 @@ export async function middleware(request: NextRequest) {
     // Check NextAuth session
     const token = await getToken({
       req: request,
-      secret: process.env.NEXTAUTH_SECRET || "your-default-secret-do-not-use-in-production"
+      secret: getEnv("NEXTAUTH_SECRET") || ""
     });
 
     // Debug: Ver el contenido del token

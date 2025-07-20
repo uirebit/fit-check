@@ -3,12 +3,13 @@ import { NextAuthConfig } from "next-auth"
 import Credentials from "next-auth/providers/credentials"
 import Google from "next-auth/providers/google"
 import bcrypt from "bcryptjs"
+import { getEnv } from "./env"
 
 export const authConfig: NextAuthConfig = {
   providers: [
     Google({
-      clientId: process.env.GOOGLE_CLIENT_ID || "",
-      clientSecret: process.env.GOOGLE_CLIENT_SECRET || "",
+      clientId: getEnv("GOOGLE_CLIENT_ID") || "",
+      clientSecret: getEnv("GOOGLE_CLIENT_SECRET") || "",
     }),
     Credentials({
       credentials: {
@@ -252,7 +253,7 @@ export const authConfig: NextAuthConfig = {
     strategy: "jwt",
     maxAge: 30 * 24 * 60 * 60, // 30 days
   },
-  secret: process.env.NEXTAUTH_SECRET || "your-default-secret-do-not-use-in-production",
+  secret: getEnv("NEXTAUTH_SECRET") || "",
 }
 
 const _authHandler = NextAuth(authConfig)

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import { getToken } from "next-auth/jwt"
 import { auth } from "@/auth"
+import { getEnv } from "@/env"
 
 export async function POST(request: NextRequest) {
   try {
@@ -14,7 +15,7 @@ export async function POST(request: NextRequest) {
     // Force JWT token refresh by using the update trigger
     const token = await getToken({ 
       req: request,
-      secret: process.env.NEXTAUTH_SECRET || "your-default-secret-do-not-use-in-production"
+      secret: getEnv("NEXTAUTH_SECRET") || ""
     })
 
     if (!token) {
