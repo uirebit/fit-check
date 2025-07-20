@@ -334,6 +334,11 @@ const es = {
     "admin.noClothesMatchFilter": "Ninguna prenda coincide con su filtro",
     "admin.noClothesAssigned": "No hay prendas asignadas a su empresa",
     "admin.noClothesAvailable": "No hay prendas adicionales disponibles",
+    "admin.exportMeasurements": "Exportar Medidas de Empleados",
+    "admin.exportingMeasurements": "Exportando...",
+    "admin.exportSuccess": "Exportación exitosa",
+    "admin.exportSuccessDesc": "Las medidas de los empleados han sido exportadas a Excel",
+    "admin.exportFailed": "Fallo en la exportación",
 
     "login.form.placeholderemail": "Ingresa tu correo electrónico",
     "login.form.placeholderpassword": "Ingresa tu contraseña",

@@ -10,7 +10,8 @@ import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { useLanguage } from "@/contexts/language-context"
 import { useAuth } from "@/hooks/use-auth"
-import { signOut } from "next-auth/react" 
+import { signOut } from "next-auth/react"
+import { ExportMeasurementsButton } from "@/components/export-measurements-button" 
 
 interface UserData {
   name: string;
@@ -245,10 +246,17 @@ export default function DashboardPage() {
                     </CardTitle>
                     <CardDescription>{t("dashboard.manageSizesDesc")}</CardDescription>
                   </CardHeader>
-                  <CardContent>
+                  <CardContent className="space-y-4">
                     <Link href={`/${userData.language}/sizes`}>
                       <Button className="w-full">{t("dashboard.manageSizes")}</Button>
                     </Link>
+                    
+                    {/* Mostrar botón de exportar medidas solo para administradores */}
+                    {(userData.isAdmin || userData.userType === 2) && (
+                      <div className="mt-2">
+                        <ExportMeasurementsButton className="w-full" />
+                      </div>
+                    )}
                   </CardContent>
                 </Card>
               )}

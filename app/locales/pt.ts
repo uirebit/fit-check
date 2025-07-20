@@ -334,6 +334,11 @@ const pt = {
     "admin.noClothesMatchFilter": "Nenhuma roupa corresponde ao seu filtro",
     "admin.noClothesAssigned": "Não há roupas atribuídas à sua empresa",
     "admin.noClothesAvailable": "Não há roupas adicionais disponíveis",
+    "admin.exportMeasurements": "Exportar Medidas dos Funcionários",
+    "admin.exportingMeasurements": "Exportando...",
+    "admin.exportSuccess": "Exportação bem-sucedida",
+    "admin.exportSuccessDesc": "As medidas dos funcionários foram exportadas para Excel",
+    "admin.exportFailed": "Falha na exportação",
     
     // Settings
     "settings.title": "Configurações da Conta",

@@ -32,6 +32,7 @@ import {
   addClothesToCompany, 
   removeClothFromCompany 
 } from "@/app/actions/company-cloth"
+import { ExportMeasurementsButton } from "@/components/export-measurements-button"
 
 export default function CompanyClothManagementPage() {
   const { t } = useLanguage();
@@ -340,7 +341,7 @@ export default function CompanyClothManagementPage() {
             <CardDescription>{t("admin.clothingManagementDesc")}</CardDescription>
           </CardHeader>
           <CardContent>
-            <Tabs value={activeTab} onValueChange={setActiveTab}>
+            <Tabs value={activeTab} onValueChange={setActiveTab} className="mt-2">
               <TabsList className="grid w-full grid-cols-2">
                 <TabsTrigger value="assigned">{t("admin.assignedClothing")}</TabsTrigger>
                 <TabsTrigger value="available">{t("admin.availableClothing")}</TabsTrigger>
