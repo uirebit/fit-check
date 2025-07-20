@@ -141,10 +141,11 @@ export async function getCompanyClothingItems(): Promise<ClothingItem[]> {
     const companyId = user.company_id;
     console.log(`Fetching clothing items for company ID: ${companyId}`);
     
-    // Get company-specific clothing items
+    // Get company-specific clothing items that are active
     const companyClothes = await prisma.fc_company_cloth.findMany({
       where: {
-        company_id: companyId
+        company_id: companyId,
+        is_active: true // Only get active clothing items
       },
       include: {
         fc_cloth: {
@@ -154,6 +155,12 @@ export async function getCompanyClothingItems(): Promise<ClothingItem[]> {
         }        
       }
     });
+    
+    // Check if any clothing items were found
+    if (!companyClothes.length) {
+      console.log("No active clothing items found for this company");
+      return [];
+    }
     
     // Map to the expected format
     const clothingItems = companyClothes.map((item: PrismaFcCompanyCloth) => ({
@@ -166,14 +173,20 @@ export async function getCompanyClothingItems(): Promise<ClothingItem[]> {
                              `category.${item.fc_cloth.fc_cloth_category.description.toLowerCase().replace(/\s+/g, "_")}` : 
                              undefined,
       // Create translation key for cloth item (e.g. "work_pants" -> "fc_cloth.work_pants")
-      translationKey: `fc_cloth.${item.fc_cloth.description}`
+      translationKey: `fc_cloth.${item.fc_cloth.description.toLowerCase().replace(/\s+/g, "_")}`
     }));
     
     console.log(`Found ${clothingItems.length} clothing items for company ${companyId}`);
-    return clothingItems;
+    // Sort clothing items alphabetically by description
+    return clothingItems.sort((a: ClothingItem, b: ClothingItem) => a.description.localeCompare(b.description));
     
   } catch (error) {
     console.error("Error fetching company clothing items:", error);
+    // Log more details for debugging
+    if (error instanceof Error) {
+      console.error(`Error name: ${error.name}, Message: ${error.message}`);
+      console.error(`Stack trace: ${error.stack}`);
+    }
     return [];
   }
 }
