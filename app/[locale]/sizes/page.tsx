@@ -13,7 +13,7 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { Separator } from "@/components/ui/separator"
 import { useLanguage } from "@/contexts/language-context"
 import { useAuth } from "@/hooks/use-auth"
-import { signOut } from "@/auth"
+import { signOut } from "next-auth/react"
 
 // Using translation keys directly in error states
 

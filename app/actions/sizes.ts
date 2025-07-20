@@ -17,6 +17,12 @@ interface SizeState {
   calculatedSize?: string
 }
 
+type MeasurementValue = {
+  measurement_id: number;
+  measure_number: number;
+  measure_value: number | null;
+};
+
 export async function saveMeasurement(prevState: SizeState | null, formData: FormData): Promise<SizeState> {
   try {
     await new Promise((resolve) => setTimeout(resolve, 1000));
@@ -310,13 +316,17 @@ export async function getSavedSizes(): Promise<SavedSize[]> {
         }
       });
       
-      // Build the measurements object
+      // Build the measurements object      
       const measurementsObj: Record<string, string> = {};
       
-      measurement.fc_cloth_measurement_value.forEach(value => {
-        const mapping = mappings.find(m => m.measure_number === value.measure_number);
+      measurement.fc_cloth_measurement_value.forEach((value: MeasurementValue) => {
+      const mapping = mappings.find((m: { measure_number: number; measure_key?: string }) => m.measure_number === value.measure_number);
         if (mapping?.measure_key) {
-          measurementsObj[mapping.measure_key] = value.measure_value?.toString() || '';
+          // Ensure the value is always a string and never undefined/null
+          const measureValue = value.measure_value;
+          measurementsObj[mapping.measure_key] = measureValue !== null && measureValue !== undefined 
+            ? String(measureValue) 
+            : '';
         }
       });
       
