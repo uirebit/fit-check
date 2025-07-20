@@ -1,5 +1,49 @@
 "use server"
 
+// Prisma model types - these should match your database schema
+interface PrismaFcClothMeasureMapping {
+  id: number;
+  cloth_id: number | null;
+  measure_number: number | null;
+  measure_key: string | null;
+}
+
+interface PrismaFcClothMeasurementValue {
+  id: number;
+  measurement_id: number;
+  measure_number: number;
+  measure_value: number | null;
+}
+
+interface PrismaFcClothCategory {
+  id: number;
+  description: string;
+}
+
+interface PrismaFcCloth {
+  id: number;
+  category_id: number | null;
+  description: string;
+  fc_cloth_category: PrismaFcClothCategory | null;
+}
+
+interface PrismaFcCompanyCloth {
+  id: number;
+  company_id: number;
+  cloth_id: number;
+  is_active: boolean | null;
+  fc_cloth: PrismaFcCloth;
+}
+
+interface PrismaFcClothMeasurement {
+  id: number;
+  user_id: number;
+  cloth_id: number;
+  calculated_size: string | null;
+  created_at: Date | null;
+  fc_cloth_measurement_value: PrismaFcClothMeasurementValue[];
+}
+
 export interface ClothingItem {
   id: string;
   description: string;
@@ -112,7 +156,7 @@ export async function getCompanyClothingItems(): Promise<ClothingItem[]> {
     });
     
     // Map to the expected format
-    const clothingItems = companyClothes.map(item => ({
+    const clothingItems = companyClothes.map((item: PrismaFcCompanyCloth) => ({
       id: item.fc_cloth.id.toString(),
       description: item.fc_cloth.description,
       category_id: item.fc_cloth.category_id || undefined,
@@ -192,12 +236,14 @@ export async function getUserMeasurements(clothingId: string): Promise<SavedMeas
     
     // Create a map for faster lookups instead of using find() in a loop
     const mappingMap = new Map();
-    mappings.forEach(mapping => {
-      mappingMap.set(mapping.measure_number, mapping.measure_key);
+    mappings.forEach((mapping: PrismaFcClothMeasureMapping) => {
+      if (mapping.measure_number !== null && mapping.measure_key !== null) {
+        mappingMap.set(mapping.measure_number, mapping.measure_key);
+      }
     });
     
     // Combine measurement values with their corresponding keys
-    const values = measurement.fc_cloth_measurement_value.map(value => {
+    const values = measurement.fc_cloth_measurement_value.map((value: PrismaFcClothMeasurementValue) => {
       const measureKey = mappingMap.get(value.measure_number) || `measure_${value.measure_number}`;
       return {
         measure_number: value.measure_number,

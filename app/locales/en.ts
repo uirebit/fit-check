@@ -314,6 +314,22 @@ const en = {
     "admin.companies.confirmDelete": "Delete Company",
     "admin.companies.deleteWarning": "This will permanently delete the company. This action cannot be undone if no users are assigned to this company.",
     "admin.companies.nameRequired": "Company name is required.",
+    
+    // Company Clothing Management
+    "admin.dashboard": "Admin Dashboard",
+    "admin.manageCompanyClothes": "Manage Company Clothing",
+    "admin.companyClothingManagement": "Company Clothing Management",
+    "admin.clothingManagementDesc": "Manage which clothing items are available to your company employees",
+    "admin.assignedClothing": "Assigned Clothing",
+    "admin.availableClothing": "Available Clothing",
+    "admin.filterByCategory": "Filter by category",
+    "admin.removeSelected": "Remove Selected",
+    "admin.addSelected": "Add Selected",
+    "admin.clothingName": "Clothing Name",
+    "admin.category": "Category",
+    "admin.noClothesMatchFilter": "No clothing items match your filter",
+    "admin.noClothesAssigned": "No clothing items assigned to your company",
+    "admin.noClothesAvailable": "No additional clothing items available",
 
     "login.form.placeholderemail": "Enter your email",
     "login.form.placeholderpassword": "Enter your password",
@@ -410,7 +426,11 @@ const en = {
     "measure.instruction.default.1": "Follow the general measurement guidelines",
     "measure.instruction.default.2": "Use a flexible measuring tape",
     "measure.instruction.default.3": "Keep measurements snug but not tight",
-    "measure.instruction.default.4": "Ask for assistance if needed"
+    "measure.instruction.default.4": "Ask for assistance if needed",
+    
+    // Common
+    "common.search": "Search",
+    "common.all": "All"
   }
 
   export default en;

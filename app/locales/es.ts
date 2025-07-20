@@ -317,6 +317,22 @@ const es = {
     "admin.companies.confirmDelete": "Eliminar Empresa",
     "admin.companies.deleteWarning": "Esto eliminará permanentemente la empresa. Esta acción no se puede deshacer si no hay usuarios asignados a esta empresa.",
     "admin.companies.nameRequired": "El nombre de la empresa es obligatorio.",
+    
+    // Company Clothing Management
+    "admin.dashboard": "Panel de Administración",
+    "admin.manageCompanyClothes": "Gestionar Ropa de la Empresa",
+    "admin.companyClothingManagement": "Gestión de Ropa de la Empresa",
+    "admin.clothingManagementDesc": "Gestione qué prendas están disponibles para los empleados de su empresa",
+    "admin.assignedClothing": "Prendas Asignadas",
+    "admin.availableClothing": "Prendas Disponibles",
+    "admin.filterByCategory": "Filtrar por categoría",
+    "admin.removeSelected": "Eliminar Seleccionados",
+    "admin.addSelected": "Añadir Seleccionados",
+    "admin.clothingName": "Nombre de la Prenda",
+    "admin.category": "Categoría",
+    "admin.noClothesMatchFilter": "Ninguna prenda coincide con su filtro",
+    "admin.noClothesAssigned": "No hay prendas asignadas a su empresa",
+    "admin.noClothesAvailable": "No hay prendas adicionales disponibles",
 
     "login.form.placeholderemail": "Ingresa tu correo electrónico",
     "login.form.placeholderpassword": "Ingresa tu contraseña",
@@ -413,7 +429,11 @@ const es = {
     "measure.instruction.default.1": "Sigue las pautas generales de medición",
     "measure.instruction.default.2": "Usa una cinta métrica flexible",
     "measure.instruction.default.3": "Mantén las medidas ajustadas pero no apretadas",
-    "measure.instruction.default.4": "Pide ayuda si la necesitas"    
+    "measure.instruction.default.4": "Pide ayuda si la necesitas",
+    
+    // Common
+    "common.search": "Buscar",
+    "common.all": "Todos"    
   }
 
   export default es;

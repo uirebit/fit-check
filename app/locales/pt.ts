@@ -318,6 +318,22 @@ const pt = {
     "admin.companies.deleteWarning": "Isso excluirá permanentemente a empresa. Esta ação não pode ser desfeita se não houver usuários atribuídos a esta empresa.",
     "admin.companies.nameRequired": "O nome da empresa é obrigatório.",
     
+    // Company Clothing Management
+    "admin.dashboard": "Painel de Administração",
+    "admin.manageCompanyClothes": "Gerenciar Roupas da Empresa",
+    "admin.companyClothingManagement": "Gerenciamento de Roupas da Empresa",
+    "admin.clothingManagementDesc": "Gerencie quais roupas estão disponíveis para os funcionários da sua empresa",
+    "admin.assignedClothing": "Roupas Atribuídas",
+    "admin.availableClothing": "Roupas Disponíveis",
+    "admin.filterByCategory": "Filtrar por categoria",
+    "admin.removeSelected": "Remover Selecionados",
+    "admin.addSelected": "Adicionar Selecionados",
+    "admin.clothingName": "Nome da Roupa",
+    "admin.category": "Categoria",
+    "admin.noClothesMatchFilter": "Nenhuma roupa corresponde ao seu filtro",
+    "admin.noClothesAssigned": "Não há roupas atribuídas à sua empresa",
+    "admin.noClothesAvailable": "Não há roupas adicionais disponíveis",
+    
     // Settings
     "settings.title": "Configurações da Conta",
     "settings.backToDashboard": "Voltar ao Painel",
@@ -410,7 +426,11 @@ const pt = {
     "measure.instruction.default.1": "Siga as diretrizes gerais de medição",
     "measure.instruction.default.2": "Use uma fita métrica flexível",
     "measure.instruction.default.3": "Mantenha as medidas ajustadas, mas não apertadas",
-    "measure.instruction.default.4": "Peça ajuda se necessário"
+    "measure.instruction.default.4": "Peça ajuda se necessário",
+    
+    // Common
+    "common.search": "Pesquisar",
+    "common.all": "Todos"
   }
 
 export default pt;

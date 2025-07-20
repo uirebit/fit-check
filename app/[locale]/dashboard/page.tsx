@@ -203,18 +203,22 @@ export default function DashboardPage() {
                       </div>
                     )}
                     
-                    {/* Mostrar tipo de usuario para superadmin */}
-                    {(userData.isSuperadmin || userData.userType === 1) && (
-                      <div className="space-y-2">
-                        <p className="text-sm font-medium text-gray-500">{t("dashboard.userType")}</p>
-                        <div className="flex items-center space-x-2">
-                          <Badge variant="default" className="bg-blue-500">Superadmin</Badge>
-                        </div>
+                    {/* Mostrar tipo de usuario para todos */}
+                    <div className="space-y-2">
+                      <p className="text-sm font-medium text-gray-500">{t("dashboard.userType")}</p>
+                      <div className="flex items-center space-x-2">
+                        {userData.userType === 1 || userData.isSuperadmin ? (
+                          <Badge variant="default" className="bg-blue-500">{t("admin.users.superadmin")}</Badge>
+                        ) : userData.userType === 2 || userData.isAdmin ? (
+                          <Badge variant="secondary">{t("admin.users.admin")}</Badge>
+                        ) : (
+                          <Badge variant="outline">{t("admin.users.employee")}</Badge>
+                        )}
                       </div>
-                    )}
+                    </div>
                     
-                    {/* Mostrar género solo si NO es superadmin */}
-                    {!userData.isSuperadmin && userData.userType !== 1 && (
+                    {/* Mostrar género solo si se tiene disponible */}
+                    {userData.gender && (
                       <div className="space-y-2">
                         <p className="text-sm font-medium text-gray-500">{t("onboarding.gender")}</p>
                         <p className="text-gray-900">{userData.gender}</p>
@@ -277,13 +281,14 @@ export default function DashboardPage() {
                       </>
                     )}
                     
-                    {/* Other admin options can be added here for both admin types */}
+                    {/* Company admins can manage clothing items for their company */}
                     {(userData.isAdmin === true || userData.userType === 1 || userData.userType === 2) && !userData.isSuperadmin && (
                       <Button 
                         className="w-full"
                         variant="secondary"
+                        onClick={() => router.push(`/${userData.language || language}/admin/company-cloth-management`)}
                       >
-                        {t("admin.dashboard")}
+                        {t("admin.manageCompanyClothes")}
                       </Button>
                     )}
                     
