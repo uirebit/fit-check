@@ -175,6 +175,7 @@ const en = {
     "login.form.forgotPassword": "Forgot your password?",
     "login.form.error": "Error signing in. Please check your credentials and try again.",
     "login.form.success": "Successfully signed in. Redirecting...",
+    "login.form.loginSuccess": "Login successful! Redirecting...",
     "login.form.emptyFields": "Please fill in all fields",
     "login.form.invalidCredentials": "Invalid email or password.",
     "login.form.serverError": "An error occurred during login. Please try again later.",

@@ -175,6 +175,7 @@ const pt = {
     "login.form.forgotPassword": "Esqueceu sua senha?",
     "login.form.error": "Erro ao entrar. Por favor verifique suas credenciais e tente novamente.",
     "login.form.success": "Login bem-sucedido. Redirecionando...",
+    "login.form.loginSuccess": "Login bem-sucedido! Redirecionando...",
     "login.form.emptyFields": "Por favor preencha todos os campos",
     "login.form.invalidCredentials": "Email ou senha inválidos.",
     "login.form.serverError": "Ocorreu um erro durante o login. Por favor tente novamente mais tarde.",

@@ -176,6 +176,7 @@ const es = {
     "login.form.forgotPassword": "¿Olvidaste tu contraseña?",
     "login.form.error": "Error al iniciar sesión. Por favor verifica tus credenciales e intenta de nuevo.",
     "login.form.success": "Sesión iniciada con éxito. Redireccionando...",
+    "login.form.loginSuccess": "¡Inicio de sesión exitoso! Redireccionando...",
     "login.form.emptyFields": "Por favor completa todos los campos",
     "login.form.invalidCredentials": "Correo electrónico o contraseña inválidos.",
     "login.form.serverError": "Ocurrió un error durante el inicio de sesión. Por favor intenta de nuevo más tarde.",
