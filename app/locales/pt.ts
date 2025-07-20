@@ -5,7 +5,7 @@ const pt = {
     "header.addSizes": "Adicionar Tamanhos",
     "header.settings": "Configurações",
     "header.signOut": "Sair",
-    "header.returndashboard": "Voltar ao Dashboard",
+    "header.returndashboard": "Voltar",
 
     // Main page
     "main.title": "Gerencie os Tamanhos da sua Roupa de Trabalho",
@@ -430,7 +430,8 @@ const pt = {
     
     // Common
     "common.search": "Pesquisar",
-    "common.all": "Todos"
+    "common.all": "Todos",
+    "common.back": "Voltar"
   }
 
 export default pt;

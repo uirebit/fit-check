@@ -7,7 +7,7 @@ const en = {
     "header.addSizes": "Add Sizes",
     "header.settings": "Settings",
     "header.signOut": "Sign Out",
-    "header.returndashboard": "Return to Dashboard",
+    "header.returndashboard": "Back",
 
     // Main page
     "main.title": "Manage Your Work Clothing Sizes",
@@ -430,7 +430,8 @@ const en = {
     
     // Common
     "common.search": "Search",
-    "common.all": "All"
+    "common.all": "All",
+    "common.back": "Back"
   }
 
   export default en;

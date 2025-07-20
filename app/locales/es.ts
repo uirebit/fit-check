@@ -5,7 +5,7 @@ const es = {
     "header.addSizes": "Agregar Tallas",
     "header.settings": "Configuración",
     "header.signOut": "Cerrar Sesión",
-    "header.returndashboard": "Volver al Dashboard",
+    "header.returndashboard": "Volver",
 
     // Main page
     "main.title": "Gestiona las Tallas de tu Ropa de Trabajo",
@@ -433,7 +433,8 @@ const es = {
     
     // Common
     "common.search": "Buscar",
-    "common.all": "Todos"    
+    "common.all": "Todos",
+    "common.back": "Volver"    
   }
 
   export default es;
