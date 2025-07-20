@@ -13,7 +13,6 @@ import {
   CheckCircle2, AlertCircle, Loader2 
 } from "lucide-react"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
-import { Separator } from "@/components/ui/separator"
 import { useLanguage } from "@/contexts/language-context"
 import { useAuth } from "@/hooks/use-auth"
 import { useRouter } from "next/navigation"

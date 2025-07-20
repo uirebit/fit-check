@@ -143,41 +143,55 @@ export default function SizesPage() {
       {/* Header */}
       <header className="bg-white shadow-sm border-b">
         <div className="container mx-auto px-4 py-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-2">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
+            <div className="flex items-center space-x-2 mb-4 sm:mb-0">
               <Zap className="h-8 w-8 text-blue-600" />
               <span className="text-2xl font-bold text-gray-900">{t("header.title")}</span>
             </div>
-            <div className="flex items-center space-x-4">
+            <div className="flex flex-wrap gap-2 items-center">
                <Button 
                   variant="ghost" 
                   size="sm" 
                   onClick={() => window.location.href = `/${language}/dashboard`}
+                  className="flex-shrink-0"
                 >
                 <ArrowLeft className="h-4 w-4 mr-2" />
-                {t("header.returndashboard")}
+                <span className="hidden sm:inline">{t("header.returndashboard")}</span>
+                <span className="sm:hidden">Back</span>
               </Button>
-              <Button variant="ghost" size="sm" onClick={() => setShowSaved(!showSaved)}>
+              <Button 
+                variant="ghost" 
+                size="sm" 
+                onClick={() => setShowSaved(!showSaved)}
+                className="flex-shrink-0"
+              >
                 <Save className="h-4 w-4 mr-2" />
-                {showSaved ? t("header.addSizes") : t("header.savedSizes")}
+                <span className="hidden sm:inline">{showSaved ? t("header.addSizes") : t("header.savedSizes")}</span>
+                <span className="sm:hidden">{showSaved ? "Add" : "Saved"}</span>
               </Button>
-              <div className="flex items-center space-x-2">
+              <div className="flex items-center space-x-1 sm:space-x-2 flex-shrink-0">
                 <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
                   <User className="h-4 w-4 text-blue-600" />
                 </div>
-                <span className="text-sm font-medium">{userData.name}</span>
+                <span className="text-xs sm:text-sm font-medium truncate max-w-[60px] sm:max-w-none">{userData.name}</span>
               </div>
               <Button 
                 variant="ghost" 
                 size="sm" 
                 onClick={() => window.location.href = `/${language}/settings`}
+                className="flex-shrink-0"
               >
-                <Settings className="h-4 w-4 mr-2" />
-                {t("header.settings")}
+                <Settings className="h-4 w-4 sm:mr-2" />
+                <span className="hidden sm:inline">{t("header.settings")}</span>
               </Button>
-              <Button variant="ghost" size="sm" onClick={handleSignOut}>
-                <LogOut className="h-4 w-4 mr-2" />
-                {t("header.signOut")}
+              <Button 
+                variant="ghost" 
+                size="sm" 
+                onClick={handleSignOut}
+                className="flex-shrink-0"
+              >
+                <LogOut className="h-4 w-4 sm:mr-2" />
+                <span className="hidden sm:inline">{t("header.signOut")}</span>
               </Button>
             </div>
           </div>
@@ -248,7 +262,7 @@ export default function SizesPage() {
                     <SelectTrigger className="w-full">
                       <SelectValue placeholder={t('main.selectPlaceholder')} />
                     </SelectTrigger>
-                    <SelectContent className="max-h-80">
+                    <SelectContent className="max-h-80 w-[calc(100vw-32px)] sm:w-auto">
                       {getGroupedClothingItems().map((group, groupIndex) => (
                         <div key={`group-${groupIndex}`}>
                           {/* Category Heading */}
@@ -266,7 +280,7 @@ export default function SizesPage() {
                             .map((type) => (
                               <SelectItem key={type.id} value={type.id}>
                                 <div className="flex items-center w-full">
-                                  <span>{t(type.translationKey || "")}</span>
+                                  <span className="truncate">{t(type.translationKey || "")}</span>
                                 </div>
                               </SelectItem>
                             ))
