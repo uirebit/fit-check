@@ -1,7 +1,7 @@
 "use client"
 
 import { useActionState } from "react"
-import { useState, useEffect } from "react"
+import { useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -17,65 +17,43 @@ export function RegisterForm() {
   const { t, language } = useLanguage();
   const router = useRouter();
   const [state, action, isPending] = useActionState(registerUser, null);
-  
-  // State to persist form data across validation failures
-  const [formData, setFormData] = useState({
-    name: "",
-    email: "",
-    companyName: "",
-    gender: "male"
-  });
-
-  // Handle form field changes
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target;
-    setFormData(prev => ({
-      ...prev,
-      [name]: value
-    }));
-  };
-
-  // Handle radio group changes
-  const handleGenderChange = (value: string) => {
-    setFormData(prev => ({
-      ...prev,
-      gender: value
-    }));
-  };
 
   // Handle successful registration
   useEffect(() => {
     async function handleSuccessfulRegister() {
       if (state?.success && state?.userData) {
         try {
-          // Usar los valores del formulario para iniciar sesión automáticamente con NextAuth
+          // Use the credentials from the server action response
           const result = await signIn("credentials", {
             redirect: false,
-            email: formData.email,
-            password: document.getElementById("password") ? 
-              (document.getElementById("password") as HTMLInputElement).value : ""
+            email: state.userData.email,
+            password: state.userData.password
           });
           
           if (result?.error) {
             console.error("Auto-login failed after registration:", result.error);
+            // Redirect to login page with success message
+            router.push(`/${language}?message=registration-success`);
+          } else if (result?.ok) {
+            // Redirect to dashboard after successful auto-login
+            setTimeout(() => {
+              router.push(`/${language}/dashboard`);
+            }, 1000);
           }
-          
-          // Redirect to dashboard after a short delay
-          setTimeout(() => {
-            router.push(`/${language}/dashboard`);
-          }, 1000);
         } catch (loginError) {
           console.error("Failed to auto-login after registration:", loginError);
+          router.push(`/${language}?message=registration-success`);
         }
       }
     }
     
     handleSuccessfulRegister();
-  }, [state, router, language, formData.email]);
+  }, [state, router, language]);
 
   return (
     <form action={action} className="space-y-4">
       <input type="hidden" name="locale" value={language} />
+      
       <div className="space-y-2">
         <Label htmlFor="name">{t("register.form.name")}</Label>
         <Input 
@@ -85,8 +63,6 @@ export function RegisterForm() {
           placeholder={t("register.form.placeholdername")} 
           required 
           disabled={isPending}
-          value={formData.name}
-          onChange={handleChange} 
         />
       </div>
 
@@ -99,8 +75,6 @@ export function RegisterForm() {
           placeholder={t("register.form.placeholderemail")} 
           required 
           disabled={isPending}
-          value={formData.email}
-          onChange={handleChange}
         />
       </div>
 
@@ -116,8 +90,6 @@ export function RegisterForm() {
           placeholder={t("onboarding.companyNamePlaceholder") || "Enter your company name"}
           required
           disabled={isPending}
-          value={formData.companyName}
-          onChange={handleChange}
           className={state?.error === "onboarding.error.companyNotFound" ? "border-red-500" : ""}
         />
       </div>
@@ -130,8 +102,7 @@ export function RegisterForm() {
         </Label>
         <RadioGroup 
           name="gender" 
-          value={formData.gender}
-          onValueChange={handleGenderChange}
+          defaultValue="male"
           disabled={isPending}
         >
           <div className="flex items-center space-x-2">

@@ -17,13 +17,20 @@ export const authConfig: NextAuthConfig = {
         password: { label: "Password", type: "password" }
       },
       async authorize(credentials) {
+        console.log("Authorize function called with:", {
+          email: credentials?.email,
+          hasPassword: !!credentials?.password
+        });
+
         if (!credentials?.email || !credentials?.password) {
-          return null
+          console.log("Missing credentials - email:", !!credentials?.email, "password:", !!credentials?.password);
+          return null;
         }
 
         try {
-          const { default: prisma } = await import("@/lib/prisma")
+          const { default: prisma } = await import("@/lib/prisma");
           
+          console.log("Looking for user:", credentials.email);
           const user = await prisma.fc_user.findUnique({
             where: { 
               email: credentials.email as string
@@ -36,26 +43,31 @@ export const authConfig: NextAuthConfig = {
                 }
               }
             }
-          })
+          });
 
           if (!user) {
-            console.log("User not found:", credentials.email)
-            return null
+            console.log("User not found:", credentials.email);
+            return null;
           }
 
-          // For regular credentials login, verify password
+          console.log("User found, verifying password for:", user.email);
+          
+          // Import bcrypt properly
+          const bcrypt = await import("bcryptjs");
           const isPasswordValid = await bcrypt.compare(
             credentials.password as string,
             user.password_hash
-          )
+          );
 
           if (!isPasswordValid) {
-            console.log("Invalid password for user:", credentials.email)
-            return null
+            console.log("Invalid password for user:", credentials.email);
+            return null;
           }
 
-          // Return user data
-          return {
+          console.log("Password valid, returning user data for:", user.email);
+
+          // Return user data in the format NextAuth expects
+          const userData = {
             id: user.id.toString(),
             email: user.email,
             name: user.username,
@@ -65,10 +77,14 @@ export const authConfig: NextAuthConfig = {
             companyId: user.company_id?.toString() || null,
             companyName: user.fc_company?.description || null,
             gender: user.is_male !== null ? (user.is_male ? "Male" : "Female") : null
-          }
+          };
+
+          console.log("Returning user data:", userData);
+          return userData;
+
         } catch (error) {
-          console.error("Authorization error:", error)
-          return null
+          console.error("Authorization error:", error);
+          return null;
         }
       }
     })

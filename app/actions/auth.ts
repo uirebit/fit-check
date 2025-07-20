@@ -14,7 +14,6 @@ interface AuthState {
 
 export async function loginUser(prevState: AuthState | null, formData: FormData): Promise<AuthState> {
   const { default: prisma } = await import("@/lib/prisma");  
-  const { signIn } = await import("@/auth");
   const email = formData.get("email") as string
   const password = formData.get("password") as string
   const locale = formData.get("locale") as string || "en"; // Get the current locale
@@ -28,15 +27,20 @@ export async function loginUser(prevState: AuthState | null, formData: FormData)
   }
 
   try {
-    // Use NextAuth's signIn function
-    const result = await signIn("credentials", {
-      email,
-      password,
-      redirect: false
+    // Validate credentials directly instead of using signIn
+    const user = await prisma.fc_user.findUnique({
+      where: { email },
+      include: {
+        fc_company: {
+          select: {
+            id: true,
+            description: true
+          }
+        }
+      }
     });
 
-    if (!result?.ok) {
-      // Handle login failure
+    if (!user) {
       return {
         success: false,
         error: "login.form.invalidCredentials",
@@ -44,10 +48,25 @@ export async function loginUser(prevState: AuthState | null, formData: FormData)
       }
     }
 
-    // Login successful - NextAuth will handle the session
+    // Verify password
+    const isPasswordValid = await bcrypt.compare(password, user.password_hash);
+
+    if (!isPasswordValid) {
+      return {
+        success: false,
+        error: "login.form.invalidCredentials",
+        errorLocale: true
+      }
+    }
+
+    // Return success with user data for client-side sign-in
     return {
       success: true,
-      message: "Login successful! Redirecting to dashboard..."
+      message: "Login successful! Redirecting to dashboard...",
+      userData: {
+        email: email,
+        password: password // Pass for client-side sign in
+      }
     };
   } catch (error) {
     console.error("Login error:", error);
@@ -58,8 +77,6 @@ export async function loginUser(prevState: AuthState | null, formData: FormData)
     };
   }
 }
-
-// No longer needed as we're using NextAuth for session management
 
 export async function registerUser(prevState: AuthState | null, formData: FormData): Promise<AuthState> {
   const name = formData.get("name") as string
@@ -162,23 +179,20 @@ export async function registerUser(prevState: AuthState | null, formData: FormDa
         password_hash,
         is_male: gender === 'male',
         company_id: companyId,
+        user_type: 3, // Default to employee
+        creation_date: new Date()
       },
     })
     
-    // Import signIn from NextAuth
-    const { signIn } = await import("@/auth");
-    
-    // Auto-login the user with NextAuth after registration
-    await signIn("credentials", {
-      email,
-      password,
-      redirect: false
-    });
-    
-    // Return success - NextAuth will handle the session
+    // Return success with instruction to sign in on client side
+    // Don't try to sign in server-side to avoid conflicts
     return {
       success: true,
-      message: "Account created successfully! Redirecting to dashboard..."
+      message: "Account created successfully!",
+      userData: {
+        email: email,
+        password: password // Pass for client-side sign in
+      }
     };
     
   } catch (error) {
