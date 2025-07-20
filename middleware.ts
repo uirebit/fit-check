@@ -52,7 +52,11 @@ export async function middleware(request: NextRequest) {
     // Check NextAuth session
     const token = await getToken({
       req: request,
-      secret: getEnv("NEXTAUTH_SECRET") || ""
+      secret: getEnv("NEXTAUTH_SECRET") || "",
+      // Add explicit cookie name for NextAuth v5
+      cookieName: process.env.NODE_ENV === "production" 
+        ? "__Secure-authjs.session-token" 
+        : "authjs.session-token"
     });
 
     // Debug: Ver el contenido del token

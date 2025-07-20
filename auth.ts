@@ -253,7 +253,20 @@ export const authConfig: NextAuthConfig = {
     strategy: "jwt",
     maxAge: 30 * 24 * 60 * 60, // 30 days
   },
-  secret: getEnv("NEXTAUTH_SECRET") || "",
+  // Make sure this matches exactly what's in your environment
+  secret: getEnv("NEXTAUTH_SECRET"),
+  // Add explicit cookie configuration for production
+  cookies: process.env.NODE_ENV === "production" ? {
+    sessionToken: {
+      name: "__Secure-authjs.session-token",
+      options: {
+        httpOnly: true,
+        sameSite: "lax",
+        path: "/",
+        secure: true,
+      },
+    },
+  } : undefined,
 }
 
 const _authHandler = NextAuth(authConfig)
