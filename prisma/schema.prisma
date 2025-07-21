@@ -41,6 +41,7 @@ model fc_cloth {
   fc_cloth_category        fc_cloth_category?         @relation(fields: [category_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
   fc_cloth_measure_mapping fc_cloth_measure_mapping[]
   fc_cloth_measurements    fc_cloth_measurements[]
+  fc_cloth_size_template   fc_cloth_size_template[]
   fc_company_cloth         fc_company_cloth[]
 }
 
@@ -52,11 +53,12 @@ model fc_cloth_category {
 
 /// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
 model fc_cloth_measure_mapping {
-  id             Int       @id @default(autoincrement())
-  cloth_id       Int?
-  measure_number Int?
-  measure_key    String?   @db.VarChar(100)
-  fc_cloth       fc_cloth? @relation(fields: [cloth_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  id                     Int                      @id @default(autoincrement())
+  cloth_id               Int?
+  measure_number         Int?
+  measure_key            String?                  @db.VarChar(100)
+  fc_cloth               fc_cloth?                @relation(fields: [cloth_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  fc_cloth_size_template fc_cloth_size_template[]
 }
 
 model fc_cloth_measurement_value {
@@ -87,4 +89,16 @@ model fc_company_cloth {
   fc_company fc_company @relation(fields: [company_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
 
   @@unique([company_id, cloth_id])
+}
+
+model fc_cloth_size_template {
+  id                       Int                      @id @default(autoincrement())
+  cloth_id                 Int
+  measure_mapping_id       Int
+  size_label               String                   @db.VarChar(5)
+  min_value                Int
+  max_value                Int
+  priority                 Int                      @default(1)
+  fc_cloth                 fc_cloth                 @relation(fields: [cloth_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  fc_cloth_measure_mapping fc_cloth_measure_mapping @relation(fields: [measure_mapping_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
 }

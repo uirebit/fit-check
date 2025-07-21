@@ -9,7 +9,7 @@ import { Label } from "@/components/ui/label"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Badge } from "@/components/ui/badge"
 import { saveMeasurement } from "@/app/actions/sizes"
-import { calculateEUSize } from "@/lib/size-calculator"
+import { calculateSizeFromServer } from "@/app/actions/sizes-calculation"
 import { getMeasurementInstructions } from "@/lib/measurement-instructions"
 import { Loader2, Save, Ruler } from "lucide-react"
 import { useLanguage } from "@/contexts/language-context"
@@ -50,6 +50,33 @@ export function ClothingMeasurement({ clothingType, clothingName, userGender }: 
     }
 
     console.log(`Loading data for clothing type: ${clothingType}`);
+    
+    // DEBUG: Direct test of size calculation with the ID
+    const debugTest = async () => {
+      try {
+        console.log("DEBUG: Testing size calculation directly with ID:", clothingType);
+        
+        // Test with sample measurements
+        const testMeasurements = {
+          "chest": "100",
+          "waist": "90", 
+          "hips": "105"
+        };
+        
+        // First check if templates exist in the database
+        const { debugGetTemplates } = await import("@/app/actions/debug");
+        const templatesDebugResult = await debugGetTemplates(clothingType);
+        console.log("DEBUG: Templates check result:", templatesDebugResult);
+        
+        // Then test the size calculation
+        const size = await calculateSizeFromServer(clothingType, testMeasurements);
+        console.log("DEBUG: Direct test result:", size);
+      } catch (err) {
+        console.error("DEBUG: Direct test error:", err);
+      }
+    };
+    
+    debugTest();
     
     // Mark that we're running the effect for this clothing type
     setEffectRan(clothingType);
@@ -107,9 +134,13 @@ export function ClothingMeasurement({ clothingType, clothingName, userGender }: 
             setMeasurements(savedValues);
             setHasSavedData(true);
             
-            // Calculate size based on the saved measurements
-            const size = calculateEUSize(clothingType, savedValues);
-            setCalculatedSize(size);
+            // Calculate size based on the saved measurements using server action
+            calculateSizeFromServer(clothingType, savedValues)
+              .then((size: string) => setCalculatedSize(size))
+              .catch((err: Error) => {
+                console.error("Error calculating size:", err);
+                setCalculatedSize("");
+              });
           }
           
           // Step 7: Mark loading of saved data as complete
@@ -145,11 +176,22 @@ export function ClothingMeasurement({ clothingType, clothingName, userGender }: 
       );
 
       if (allFieldsFilled) {
-        // Calculate size only when all fields are filled
-        const size = calculateEUSize(clothingType, newMeasurements);
-        setCalculatedSize(size);
+        // Calculate size only when all fields are filled using server action
+        console.log("All fields filled, calculating size for:", clothingType);
+        console.log("Measurements being sent to calculation:", JSON.stringify(newMeasurements));
+        
+        calculateSizeFromServer(clothingType, newMeasurements)
+          .then((size: string) => {
+            console.log("Size calculation result:", size);
+            setCalculatedSize(size);
+          })
+          .catch((err: Error) => {
+            console.error("Error calculating size:", err);
+            setCalculatedSize("");
+          });
       } else {
         // Clear calculated size if not all fields are filled
+        console.log("Not all required measurement fields are filled");
         setCalculatedSize("");
       }
     }, 100); // 100ms delay to debounce multiple rapid changes
