@@ -298,6 +298,11 @@ const en = {
     // Admin - Companies
     "admin.companies.manage": "Manage Companies",
     "admin.companies.title": "Company Management",
+    "admin.selectCompany": "Select Company",
+    "admin.selectCompanyDesc": "Choose a company to manage its clothing items",
+    "admin.selectCompanyPlaceholder": "Choose a company...",
+    "admin.noCompaniesFound": "No companies found in the system",
+    "loading.companies": "Loading companies...",
     "admin.companies.description": "Add, edit or remove companies in the system",
     "admin.companies.add": "Add Company",
     "admin.companies.edit": "Edit",

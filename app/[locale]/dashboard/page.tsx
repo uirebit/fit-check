@@ -294,18 +294,13 @@ export default function DashboardPage() {
                         >
                           {t("admin.users.manage")}
                         </Button>
+                        <Button 
+                          className="w-full text-sm" 
+                          onClick={() => router.push(`/${userData.language || language}/admin/company-cloth-management`)}
+                        >
+                          {t("admin.manageCompanyClothes")}
+                        </Button>
                       </>
-                    )}
-                    
-                    {/* Company admins can manage clothing items for their company */}
-                    {(userData.isAdmin === true || userData.userType === 1 || userData.userType === 2) && !userData.isSuperadmin && (
-                      <Button 
-                        className="w-full text-sm"
-                        variant="secondary"
-                        onClick={() => router.push(`/${userData.language || language}/admin/company-cloth-management`)}
-                      >
-                        {t("admin.manageCompanyClothes")}
-                      </Button>
                     )}
                     
                     {/* Account settings button */}

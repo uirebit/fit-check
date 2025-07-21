@@ -31,6 +31,7 @@ import {
   addClothesToCompany, 
   removeClothFromCompany 
 } from "@/app/actions/company-cloth"
+import { Company, getAllCompanies } from "@/app/actions/company"
 import { ExportMeasurementsButton } from "@/components/export-measurements-button"
 
 export default function CompanyClothManagementPage() {
@@ -44,6 +45,8 @@ export default function CompanyClothManagementPage() {
   const [allClothes, setAllClothes] = useState<AllClothingItem[]>([]);
   const [filteredCompanyClothes, setFilteredCompanyClothes] = useState<CompanyCloth[]>([]);
   const [filteredAllClothes, setFilteredAllClothes] = useState<AllClothingItem[]>([]);
+  const [companies, setCompanies] = useState<Company[]>([]);
+  const [selectedCompanyId, setSelectedCompanyId] = useState<number | null>(null);
   
   // State for search and filter
   const [searchAssigned, setSearchAssigned] = useState("");
@@ -58,6 +61,7 @@ export default function CompanyClothManagementPage() {
   // UI state
   const [activeTab, setActiveTab] = useState("assigned");
   const [isLoading, setIsLoading] = useState(true);
+  const [loadingCompanies, setLoadingCompanies] = useState(false);
   const [addingItems, setAddingItems] = useState(false);
   const [removingItems, setRemovingItems] = useState(false);
   const [error, setError] = useState("");
@@ -67,16 +71,53 @@ export default function CompanyClothManagementPage() {
   const assignedCategories = [...new Set(companyClothes.map(item => item.category))];
   const availableCategories = [...new Set(allClothes.map(item => item.category))];
   
-  // Effect to load data on component mount
+  // Effect to load companies if user is superadmin
+  useEffect(() => {
+    async function loadCompanies() {
+      if (!isAuthenticated || authLoading) return;
+      
+      // Only load companies if user is superadmin
+      if (user?.isSuperadmin || user?.userType === 1) {
+        setLoadingCompanies(true);
+        try {
+          const response = await getAllCompanies();
+          if (response.success && response.companies) {
+            setCompanies(response.companies);
+            // If there are companies, select the first one by default
+            if (response.companies.length > 0) {
+              setSelectedCompanyId(response.companies[0].id);
+            }
+          } else if (response.error) {
+            setError(response.error);
+          }
+        } catch (err) {
+          setError("Failed to load companies");
+          console.error(err);
+        } finally {
+          setLoadingCompanies(false);
+        }
+      } else {
+        // For regular admins, use their own company
+        if (user?.companyId) {
+          setSelectedCompanyId(parseInt(user.companyId));
+        }
+      }
+    }
+    
+    loadCompanies();
+  }, [isAuthenticated, authLoading, user]);
+  
+  // Effect to load clothing data when selectedCompanyId changes
   useEffect(() => {
     async function loadData() {
-      if (!isAuthenticated || authLoading) return;
+      if (!isAuthenticated || authLoading || selectedCompanyId === null) return;
       
       try {
         setIsLoading(true);
+        setError(""); // Clear any previous errors
         
         // Load assigned clothes
-        const companyResponse = await getCompanyClothes();
+        const companyResponse = await getCompanyClothes(selectedCompanyId);
         if (companyResponse.success && companyResponse.companyClothes) {
           setCompanyClothes(companyResponse.companyClothes);
           setFilteredCompanyClothes(companyResponse.companyClothes);
@@ -85,13 +126,18 @@ export default function CompanyClothManagementPage() {
         }
         
         // Load available clothes
-        const allResponse = await getAllClothingItems();
+        const allResponse = await getAllClothingItems(selectedCompanyId);
         if (allResponse.success && allResponse.allClothes) {
           setAllClothes(allResponse.allClothes);
           setFilteredAllClothes(allResponse.allClothes.filter(item => !item.isAssigned));
         } else if (allResponse.error) {
           setError(allResponse.error);
         }
+        
+        // Clear selections when company changes
+        setSelectedAssigned(new Set());
+        setSelectedAvailable(new Set());
+        
       } catch (err) {
         setError("Failed to load clothing items");
         console.error(err);
@@ -101,7 +147,7 @@ export default function CompanyClothManagementPage() {
     }
     
     loadData();
-  }, [isAuthenticated, authLoading]);
+  }, [isAuthenticated, authLoading, selectedCompanyId]);
   
   // Effect to filter company clothes when search or filter changes
   useEffect(() => {
@@ -178,17 +224,22 @@ export default function CompanyClothManagementPage() {
       return;
     }
     
+    if (selectedCompanyId === null) {
+      setError("Please select a company first");
+      return;
+    }
+    
     setAddingItems(true);
     setError("");
     
     try {
-      const response = await addClothesToCompany(Array.from(selectedAvailable));
+      const response = await addClothesToCompany(Array.from(selectedAvailable), selectedCompanyId);
       if (response.success) {
         setSuccessMessage(response.message || "Items added successfully");
         
         // Refresh data
-        const companyResponse = await getCompanyClothes();
-        const allResponse = await getAllClothingItems();
+        const companyResponse = await getCompanyClothes(selectedCompanyId);
+        const allResponse = await getAllClothingItems(selectedCompanyId);
         
         if (companyResponse.success && companyResponse.companyClothes) {
           setCompanyClothes(companyResponse.companyClothes);
@@ -225,17 +276,22 @@ export default function CompanyClothManagementPage() {
       return;
     }
     
+    if (selectedCompanyId === null) {
+      setError("Please select a company first");
+      return;
+    }
+    
     setRemovingItems(true);
     setError("");
     
     try {
-      const response = await removeClothFromCompany(Array.from(selectedAssigned));
+      const response = await removeClothFromCompany(Array.from(selectedAssigned), selectedCompanyId);
       if (response.success) {
         setSuccessMessage(response.message || "Items removed successfully");
         
         // Refresh data
-        const companyResponse = await getCompanyClothes();
-        const allResponse = await getAllClothingItems();
+        const companyResponse = await getCompanyClothes(selectedCompanyId);
+        const allResponse = await getAllClothingItems(selectedCompanyId);
         
         if (companyResponse.success && companyResponse.companyClothes) {
           setCompanyClothes(companyResponse.companyClothes);
@@ -300,26 +356,20 @@ export default function CompanyClothManagementPage() {
   
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Header */}
-      <header className="bg-white shadow-sm border-b">
-        <div className="container mx-auto px-4 py-4">
-          <div className="flex items-center">
-            <Button 
-              variant="ghost" 
-              size="sm" 
-              onClick={() => router.push(`/${language}/dashboard`)}
-              className="mr-4"
-            >
-              <ArrowLeft className="h-4 w-4 mr-2" />
-              {t("common.back")}
-            </Button>
-            <h1 className="text-xl font-bold">{t("admin.manageCompanyClothes")}</h1>
-          </div>
-        </div>
-      </header>
-
       {/* Main Content */}
       <main className="container mx-auto px-4 py-8">
+        <div className="mb-6 flex items-start justify-between">
+          <div>
+            <h1 className="text-3xl font-bold mb-2 flex items-center">
+              {t("admin.companyClothingManagement")}
+            </h1>
+            <p className="text-gray-600 mb-4">{t("admin.clothingManagementDesc")}</p>
+          </div>
+          <Button variant="outline" onClick={() => router.push(`/${language}/dashboard`)}>
+            <ArrowLeft className="mr-2 h-4 w-4" />
+            {t("admin.backToDashboard")}
+          </Button>
+        </div>
         {error && (
           <Alert variant="destructive" className="mb-4">
             <AlertCircle className="h-4 w-4" />
@@ -332,6 +382,45 @@ export default function CompanyClothManagementPage() {
             <CheckCircle2 className="h-4 w-4 text-green-500" />
             <AlertDescription className="text-green-700">{successMessage}</AlertDescription>
           </Alert>
+        )}
+        
+        {/* Company Selector for Superadmins */}
+        {(user?.isSuperadmin || user?.userType === 1) && (
+          <Card className="mb-6">
+            <CardHeader>
+              <CardTitle>{t("admin.selectCompany")}</CardTitle>
+              <CardDescription>{t("admin.selectCompanyDesc")}</CardDescription>
+            </CardHeader>
+            <CardContent>
+              {loadingCompanies ? (
+                <div className="flex items-center">
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  <span>{t("loading.companies")}</span>
+                </div>
+              ) : companies.length === 0 ? (
+                <Alert>
+                  <AlertCircle className="h-4 w-4" />
+                  <AlertDescription>{t("admin.noCompaniesFound")}</AlertDescription>
+                </Alert>
+              ) : (
+                <Select 
+                  value={selectedCompanyId?.toString()} 
+                  onValueChange={(value) => setSelectedCompanyId(parseInt(value))}
+                >
+                  <SelectTrigger className="w-full md:w-1/2">
+                    <SelectValue placeholder={t("admin.selectCompanyPlaceholder")} />
+                  </SelectTrigger>
+                  <SelectContent className="max-h-60 overflow-auto">
+                    {companies.map((company) => (
+                      <SelectItem key={company.id} value={company.id.toString()}>
+                        {company.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              )}
+            </CardContent>
+          </Card>
         )}
         
         <Card className="mb-8">

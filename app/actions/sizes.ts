@@ -298,7 +298,13 @@ export async function getSavedSizes(): Promise<SavedSize[]> {
       },
       include: {
         fc_cloth: true,
-        fc_cloth_measurement_value: true
+        fc_cloth_measurement_value: {
+          select: {
+            measurement_id: true,
+            measure_number: true,
+            measure_value: true
+          }
+        }
       },
       orderBy: {
         created_at: 'desc'
@@ -319,8 +325,24 @@ export async function getSavedSizes(): Promise<SavedSize[]> {
       // Build the measurements object      
       const measurementsObj: Record<string, string> = {};
       
-      measurement.fc_cloth_measurement_value.forEach((value: MeasurementValue) => {
-      const mapping = mappings.find((m: { measure_number: number; measure_key?: string }) => m.measure_number === value.measure_number);
+      // Ensure fc_cloth_measurement_value is defined and is an array before using forEach
+      if (!measurement.fc_cloth_measurement_value) {
+        console.warn(`Measurement ${measurement.id} has no fc_cloth_measurement_value property`);
+        continue; // Skip this measurement and continue with the next one
+      }
+      
+      const measurementValues = Array.isArray(measurement.fc_cloth_measurement_value) 
+        ? measurement.fc_cloth_measurement_value 
+        : [];
+      
+      measurementValues.forEach((value: MeasurementValue) => {
+        const mapping = mappings.find((m) => {
+          // Ensure both values are non-null before comparison
+          return m.measure_number !== null && 
+                 value.measure_number !== null &&
+                 m.measure_number === value.measure_number;
+        });
+        
         if (mapping?.measure_key) {
           // Ensure the value is always a string and never undefined/null
           const measureValue = value.measure_value;
@@ -330,10 +352,14 @@ export async function getSavedSizes(): Promise<SavedSize[]> {
         }
       });
       
+      const clothDescription = measurement.fc_cloth && typeof measurement.fc_cloth === 'object' 
+        ? measurement.fc_cloth.description || 'Unknown'
+        : 'Unknown';
+        
       savedSizes.push({
         id: measurement.id.toString(),
         clothingType: measurement.cloth_id.toString(),
-        clothingName: measurement.fc_cloth.description || 'Unknown',
+        clothingName: clothDescription,
         // Asegúrate de que clothingName sea la clave para las traducciones
         measurements: measurementsObj,
         calculatedSize: measurement.calculated_size || '',

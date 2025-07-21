@@ -301,6 +301,11 @@ const pt = {
     // Admin - Companies
     "admin.companies.manage": "Gerenciar Empresas",
     "admin.companies.title": "Gestão de Empresas",
+    "admin.selectCompany": "Selecionar Empresa",
+    "admin.selectCompanyDesc": "Escolha uma empresa para gerenciar seus itens de vestuário",
+    "admin.selectCompanyPlaceholder": "Escolha uma empresa...",
+    "admin.noCompaniesFound": "Nenhuma empresa encontrada no sistema",
+    "loading.companies": "Carregando empresas...",
     "admin.companies.description": "Adicionar, editar ou remover empresas no sistema",
     "admin.companies.add": "Adicionar Empresa",
     "admin.companies.edit": "Editar",

@@ -57,7 +57,7 @@ export interface AllClothingResponse {
 /**
  * Get all clothing items assigned to a company
  */
-export async function getCompanyClothes(): Promise<CompanyClothResponse> {
+export async function getCompanyClothes(companyId?: number): Promise<CompanyClothResponse> {
   try {
     // Get current user's session
     const session = await auth()
@@ -70,33 +70,36 @@ export async function getCompanyClothes(): Promise<CompanyClothResponse> {
       }
     }
     
-    // Get user's company ID
+    // Get user's info
     const { default: prisma } = await import("@/lib/prisma")
     const user = await prisma.fc_user.findUnique({
       where: { email: session.user.email },
       select: { company_id: true, user_type: true }
     })
     
-    // Check if user has a company
-    if (!user?.company_id) {
+    // If companyId is not provided, use the user's company
+    const targetCompanyId = companyId || user?.company_id;
+    
+    // Check if we have a valid company ID
+    if (!targetCompanyId) {
       return {
         success: false,
-        error: "User has no associated company"
+        error: "No company specified"
       }
     }
     
-    // Check if user is admin or superadmin
-    if (user.user_type !== 1 && user.user_type !== 2) {
+    // Check if user is admin for their company or superadmin for any company
+    if (user?.user_type !== 1 && (user?.user_type !== 2 || companyId)) {
       return {
         success: false,
-        error: "Unauthorized: Only admins can manage company clothes"
+        error: "Unauthorized: Only admins can manage their own company clothes or superadmins can manage any company clothes"
       }
     }
     
     // Get company clothes
     const companyClothes = await prisma.fc_company_cloth.findMany({
       where: {
-        company_id: user.company_id
+        company_id: targetCompanyId
       },
       include: {
         fc_cloth: {
@@ -139,7 +142,7 @@ export async function getCompanyClothes(): Promise<CompanyClothResponse> {
 /**
  * Get all available clothing items that can be assigned to a company
  */
-export async function getAllClothingItems(): Promise<AllClothingResponse> {
+export async function getAllClothingItems(companyId?: number): Promise<AllClothingResponse> {
   try {
     // Get current user's session
     const session = await auth()
@@ -152,26 +155,29 @@ export async function getAllClothingItems(): Promise<AllClothingResponse> {
       }
     }
     
-    // Get user's company ID
+    // Get user's info
     const { default: prisma } = await import("@/lib/prisma")
     const user = await prisma.fc_user.findUnique({
       where: { email: session.user.email },
       select: { company_id: true, user_type: true }
     })
     
-    // Check if user has a company
-    if (!user?.company_id) {
+    // If companyId is not provided, use the user's company
+    const targetCompanyId = companyId || user?.company_id;
+    
+    // Check if we have a valid company ID
+    if (!targetCompanyId) {
       return {
         success: false,
-        error: "User has no associated company"
+        error: "No company specified"
       }
     }
     
-    // Check if user is admin or superadmin
-    if (user.user_type !== 1 && user.user_type !== 2) {
+    // Check if user is admin for their company or superadmin for any company
+    if (user?.user_type !== 1 && (user?.user_type !== 2 || companyId)) {
       return {
         success: false,
-        error: "Unauthorized: Only admins can manage company clothes"
+        error: "Unauthorized: Only admins can manage their own company clothes or superadmins can manage any company clothes"
       }
     }
     
@@ -188,7 +194,7 @@ export async function getAllClothingItems(): Promise<AllClothingResponse> {
     // Get current company clothes
     const companyClothes = await prisma.fc_company_cloth.findMany({
       where: {
-        company_id: user.company_id
+        company_id: targetCompanyId
       },
       select: {
         cloth_id: true
@@ -223,7 +229,7 @@ export async function getAllClothingItems(): Promise<AllClothingResponse> {
 /**
  * Add clothing items to a company
  */
-export async function addClothesToCompany(clothIds: number[]): Promise<CompanyClothResponse> {
+export async function addClothesToCompany(clothIds: number[], companyId?: number): Promise<CompanyClothResponse> {
   try {
     // Validate input
     if (!clothIds || !clothIds.length) {
@@ -244,18 +250,29 @@ export async function addClothesToCompany(clothIds: number[]): Promise<CompanyCl
       }
     }
     
-    // Get user's company ID
+    // Get user's info
     const { default: prisma } = await import("@/lib/prisma")
     const user = await prisma.fc_user.findUnique({
       where: { email: session.user.email },
       select: { company_id: true, user_type: true }
     })
     
-    // Check if user has a company and is admin
-    if (!user?.company_id || (user.user_type !== 1 && user.user_type !== 2)) {
+    // If companyId is not provided, use the user's company
+    const targetCompanyId = companyId || user?.company_id;
+    
+    // Check if we have a valid company ID
+    if (!targetCompanyId) {
       return {
         success: false,
-        error: "Unauthorized: Only admins can manage company clothes"
+        error: "No company specified"
+      }
+    }
+    
+    // Check permissions: regular admins can only manage their company, superadmins can manage any company
+    if (user?.user_type !== 1 && (user?.user_type !== 2 || companyId)) {
+      return {
+        success: false,
+        error: "Unauthorized: Only admins can manage their own company clothes or superadmins can manage any company clothes"
       }
     }
     
@@ -265,7 +282,7 @@ export async function addClothesToCompany(clothIds: number[]): Promise<CompanyCl
         where: {
           // Use the unique constraint
           company_id_cloth_id: {
-            company_id: user.company_id!,
+            company_id: targetCompanyId,
             cloth_id: clothId
           }
         },
@@ -273,7 +290,7 @@ export async function addClothesToCompany(clothIds: number[]): Promise<CompanyCl
           is_active: true // If it exists but was inactive, make it active
         },
         create: {
-          company_id: user.company_id!,
+          company_id: targetCompanyId,
           cloth_id: clothId,
           is_active: true
         }
@@ -302,7 +319,7 @@ export async function addClothesToCompany(clothIds: number[]): Promise<CompanyCl
 /**
  * Remove clothing items from a company
  */
-export async function removeClothFromCompany(companyClothIds: string[]): Promise<CompanyClothResponse> {
+export async function removeClothFromCompany(companyClothIds: string[], companyId?: number): Promise<CompanyClothResponse> {
   try {
     // Validate input
     if (!companyClothIds || !companyClothIds.length) {
@@ -323,18 +340,29 @@ export async function removeClothFromCompany(companyClothIds: string[]): Promise
       }
     }
     
-    // Get user's company ID
+    // Get user's info
     const { default: prisma } = await import("@/lib/prisma")
     const user = await prisma.fc_user.findUnique({
       where: { email: session.user.email },
       select: { company_id: true, user_type: true }
     })
     
-    // Check if user has a company and is admin
-    if (!user?.company_id || (user.user_type !== 1 && user.user_type !== 2)) {
+    // If companyId is not provided, use the user's company
+    const targetCompanyId = companyId || user?.company_id;
+    
+    // Check if we have a valid company ID
+    if (!targetCompanyId) {
       return {
         success: false,
-        error: "Unauthorized: Only admins can manage company clothes"
+        error: "No company specified"
+      }
+    }
+    
+    // Check permissions: regular admins can only manage their company, superadmins can manage any company
+    if (user?.user_type !== 1 && (user?.user_type !== 2 || companyId)) {
+      return {
+        success: false,
+        error: "Unauthorized: Only admins can manage their own company clothes or superadmins can manage any company clothes"
       }
     }
     
@@ -347,7 +375,7 @@ export async function removeClothFromCompany(companyClothIds: string[]): Promise
         id: {
           in: ids
         },
-        company_id: user.company_id
+        company_id: targetCompanyId
       }
     })
     
