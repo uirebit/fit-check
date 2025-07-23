@@ -28,8 +28,14 @@ export async function loginUser(prevState: AuthState | null, formData: FormData)
 
   try {
     // Validate credentials directly instead of using signIn
-    const user = await prisma.fc_user.findUnique({
-      where: { email },
+    // Use findFirst with case insensitive mode for email
+    const user = await prisma.fc_user.findFirst({
+      where: { 
+        email: {
+          equals: email,
+          mode: 'insensitive'
+        }
+      },
       include: {
         fc_company: {
           select: {
@@ -122,8 +128,16 @@ export async function registerUser(prevState: AuthState | null, formData: FormDa
     }
   }
 
-  // Check if user already exists
-  const existingUser = await prisma.fc_user.findUnique({ where: { email } })
+  // Check if user already exists (case insensitive)
+  const existingUser = await prisma.fc_user.findFirst({ 
+    where: { 
+      email: {
+        equals: email,
+        mode: 'insensitive'
+      } 
+    }
+  });
+  
   if (existingUser) {
     return {
       success: false,
@@ -172,10 +186,11 @@ export async function registerUser(prevState: AuthState | null, formData: FormDa
     const password_hash = await bcrypt.hash(password, 10)
 
     // Create user in database with company and gender
+    // Store email in lowercase for consistency
     const user = await prisma.fc_user.create({
       data: {
         username: name,
-        email,
+        email: email.toLowerCase(), // Store email in lowercase
         password_hash,
         is_male: gender === 'male',
         company_id: companyId,

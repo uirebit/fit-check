@@ -31,9 +31,13 @@ export const authConfig: NextAuthConfig = {
           const { default: prisma } = await import("@/lib/prisma");
           
           console.log("Looking for user:", credentials.email);
-          const user = await prisma.fc_user.findUnique({
+          // Use findFirst with case insensitive mode instead of findUnique for email
+          const user = await prisma.fc_user.findFirst({
             where: { 
-              email: credentials.email as string
+              email: {
+                equals: credentials.email as string,
+                mode: 'insensitive'
+              }
             },
             include: {
               fc_company: {
@@ -102,9 +106,14 @@ export const authConfig: NextAuthConfig = {
         try {
           const { default: prisma } = await import("@/lib/prisma")
           
-          // Check if user exists in our database
-          let existingUser = await prisma.fc_user.findUnique({
-            where: { email: user.email! },
+          // Check if user exists in our database (case insensitive)
+          let existingUser = await prisma.fc_user.findFirst({
+            where: { 
+              email: {
+                equals: user.email!,
+                mode: 'insensitive'
+              }
+            },
             include: {
               fc_company: {
                 select: {
@@ -120,7 +129,7 @@ export const authConfig: NextAuthConfig = {
             // Create new user for Google OAuth
             existingUser = await prisma.fc_user.create({
               data: {
-                email: user.email!,
+                email: (user.email!).toLowerCase(), // Store email in lowercase for consistency
                 username: user.name || user.email!.split('@')[0],
                 password_hash: "", // Empty for OAuth users
                 is_male: null, // Will be set during onboarding
