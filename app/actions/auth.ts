@@ -358,6 +358,101 @@ export async function completeOnboarding(prevState: AuthState | null, formData: 
 }
 
 // New function to handle Google OAuth simulation
+export async function updateUserProfile(prevState: AuthState | null, formData: FormData): Promise<AuthState> {
+  // Get user email from NextAuth session
+  const { auth } = await import("@/auth");
+  const session = await auth();
+  const email = session?.user?.email;
+  
+  if (!email) {
+    return {
+      success: false,
+      error: "settings.error.notAuthenticated",
+      errorLocale: true
+    }
+  }
+  
+  const { default: prisma } = await import("@/lib/prisma");
+  const name = formData.get("name") as string;
+  const gender = formData.get("gender") as string;
+  
+  // Basic validation
+  if (!name || !gender) {
+    return {
+      success: false,
+      error: "settings.error.emptyFields",
+      errorLocale: true
+    }
+  }
+  
+  try {
+    // Find user by email (case insensitive)
+    const user = await prisma.fc_user.findFirst({
+      where: { 
+        email: {
+          equals: email,
+          mode: 'insensitive'
+        }
+      },
+      include: {
+        fc_company: {
+          select: {
+            id: true,
+            description: true
+          }
+        }
+      }
+    });
+    
+    if (!user) {
+      return {
+        success: false,
+        error: "settings.error.userNotFound",
+        errorLocale: true
+      };
+    }
+    
+    // Update user data in database
+    await prisma.fc_user.update({
+      where: { id: user.id },
+      data: {
+        username: name,
+        is_male: gender === 'Male'
+      }
+    });
+    
+    // Determine user type and roles for response
+    const userType = user.user_type || 3;
+    const isSuperadmin = userType === 1;
+    const isAdmin = userType === 2;
+    
+    // Return success with updated user data
+    return {
+      success: true,
+      message: "settings.success.profileUpdated",
+      errorLocale: true,
+      userData: {
+        id: user.id,
+        name: name,
+        email: user.email,
+        gender: gender,
+        companyId: user.company_id?.toString() || "N/A",
+        companyName: user.fc_company?.description || "N/A",
+        userType: userType,
+        isAdmin: isAdmin,
+        isSuperadmin: isSuperadmin
+      }
+    };
+  } catch (error) {
+    console.error("Profile update error:", error);
+    return {
+      success: false,
+      error: "settings.error.saveFailed",
+      errorLocale: true
+    };
+  }
+}
+
 export async function handleGoogleAuth(googleProfile: {
   id: string
   email: string

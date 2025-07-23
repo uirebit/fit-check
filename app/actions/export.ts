@@ -2,6 +2,9 @@
 
 import { auth } from "@/auth"
 import * as XLSX from 'xlsx'
+import en from "@/app/locales/en"
+import es from "@/app/locales/es"
+import pt from "@/app/locales/pt"
 
 // Types for measurement data
 interface UserMeasurement {
@@ -32,7 +35,7 @@ interface ExportResponse {
  * Export employee measurements for a specific company as an Excel file
  * Only accessible by admin users
  */
-export async function exportEmployeeMeasurements(): Promise<ExportResponse> {
+export async function exportEmployeeMeasurements(locale: string = 'en'): Promise<ExportResponse> {
   try {
     // Get the current session
     const session = await auth()
@@ -45,6 +48,15 @@ export async function exportEmployeeMeasurements(): Promise<ExportResponse> {
         error: "Authentication required" 
       }
     }
+    
+    // Validate locale and make sure it's a string
+    console.log(`Original locale received: ${locale}`);
+    if (!locale || typeof locale !== 'string' || !['en', 'es', 'pt'].includes(locale)) {
+      console.warn(`Invalid locale provided: ${locale}, defaulting to English`);
+      locale = 'en'; // Default to English if invalid locale
+    }
+    console.log(`Using locale: ${locale} for export`);
+    
     
     // Import Prisma
     const { default: prisma } = await import("@/lib/prisma")
@@ -181,38 +193,141 @@ export async function exportEmployeeMeasurements(): Promise<ExportResponse> {
     // Create workbook
     const wb = XLSX.utils.book_new()
     
-    // Create worksheet with all measurements
-    const flattenedData = allMeasurements.map(measurement => {
-      // Basic data
-      const baseData: any = {
-        'User ID': measurement.userId,
-        'User Name': measurement.userName,
-        'User Email': measurement.userEmail,
-        'Clothing Item': measurement.clothingName,
-        'Category': measurement.categoryName,
-        'Calculated Size': measurement.calculatedSize || 'Unknown',
-        'Saved At': measurement.savedAt || 'Unknown'
+    // Load translations based on locale
+    const translations = locale === 'es' ? es : locale === 'pt' ? pt : en;
+    
+    // Debug log to verify the correct locale is being used
+    console.log(`Exporting with locale: ${locale}`);
+
+    // Function to get translated text
+    const t = (key: string): string => {
+      const value = (translations as any)[key];
+      if (value === undefined) {
+        console.warn(`Translation key not found: ${key} for locale: ${locale}`);
+        return key;
+      }
+      return value;
+    };
+    
+    // Function to translate clothing names if they exist in translations
+    const translateClothing = (name: string): string => {
+      const key = `fc_cloth.${name.toLowerCase().replace(/ /g, '_')}`;
+      return t(key) !== key ? t(key) : name;
+    };
+    
+    // Function to translate category names if they exist in translations
+    const translateCategory = (name: string): string => {
+      // Map of special category names that come directly from the database
+      const categoryMap: Record<string, string> = {
+        'clothing': 'fc_category.clothing',
+        'footwear': 'fc_category.footwear',
+        'head_protection': 'fc_category.head_protection',
+        'hand_protection': 'fc_category.hand_protection',
+        'eye_face_protection': 'fc_category.eye_face_protection',
+        'respiratory_protection': 'fc_category.respiratory_protection',
+        'high_visibility': 'fc_category.high_visibility',
+        'thermal_clothing': 'fc_category.thermal_clothing',
+        'welding': 'fc_category.welding',
+        'lab_wear': 'fc_category.lab_wear'
+      };
+      
+      // First try with the direct mapping for special database categories
+      if (name.toLowerCase() in categoryMap) {
+        const mappedKey = categoryMap[name.toLowerCase()];
+        return t(mappedKey);
       }
       
-      // Add measurement data as columns
-      measurement.measurementData.forEach(data => {
-        baseData[data.measureKey] = data.measureValue
-      })
+      // Then try with exact match (for other category names)
+      const exactKey = `fc_category.${name.toLowerCase().replace(/ /g, '_')}`;
+      if (t(exactKey) !== exactKey) {
+        return t(exactKey);
+      }
       
-      return baseData
+      // If no exact match, try with the singular form (removing trailing 's')
+      if (name.toLowerCase().endsWith('s')) {
+        const singularKey = `fc_category.${name.toLowerCase().slice(0, -1).replace(/ /g, '_')}`;
+        if (t(singularKey) !== singularKey) {
+          return t(singularKey);
+        }
+      }
+      
+      // If no translation found, return the original name
+      return name;
+    };
+    
+    // Group measurements by clothing item, ID, and size
+    const groupedData = new Map<string, Map<string, number>>()
+    // Keep track of clothing IDs
+    const clothingInfoMap = new Map<string, { id: number, originalName: string, categoryName: string }>()
+    
+    allMeasurements.forEach(measurement => {
+      // Create a unique key including the ID to ensure we don't mix different clothes with same name
+      const clothingKey = `${measurement.clothingName}|${measurement.categoryName}|${measurement.clothingId}`
+      const size = measurement.calculatedSize || t('excel.unknown') || 'Unknown'
+      
+      if (!groupedData.has(clothingKey)) {
+        groupedData.set(clothingKey, new Map<string, number>())
+        clothingInfoMap.set(clothingKey, {
+          id: measurement.clothingId,
+          originalName: measurement.clothingName,
+          categoryName: measurement.categoryName
+        })
+      }
+      
+      const sizeMap = groupedData.get(clothingKey)!
+      sizeMap.set(size, (sizeMap.get(size) || 0) + 1)
     })
     
-    const ws = XLSX.utils.json_to_sheet(flattenedData)
+    // Convert grouped data to array for the sheet
+    const orderedData = Array.from(groupedData.entries()).flatMap(([clothingKey, sizeMap]) => {
+      const clothingInfo = clothingInfoMap.get(clothingKey)!
+      
+      return Array.from(sizeMap.entries()).map(([size, count]) => {
+        // Use translations for column headers
+        return {
+          [t('excel.column.quantity')]: count,
+          [t('excel.column.clothingId')]: clothingInfo.id,
+          [t('excel.column.clothingItem')]: translateClothing(clothingInfo.originalName),
+          [t('excel.column.category')]: translateCategory(clothingInfo.categoryName),
+          [t('excel.column.calculatedSize')]: size
+        }
+      })
+    })
     
-    // Add worksheet to workbook
-    XLSX.utils.book_append_sheet(wb, ws, 'Employee Measurements')
+    // Get the translated column names
+    const colQuantity = t('excel.column.quantity');
+    const colClothingId = t('excel.column.clothingId');
+    const colClothingItem = t('excel.column.clothingItem');
+    const colCategory = t('excel.column.category');
+    const colCalculatedSize = t('excel.column.calculatedSize');
+    
+    // Sort by clothing item, category, and size
+    orderedData.sort((a, b) => {
+      if (String(a[colClothingItem]) !== String(b[colClothingItem])) {
+        return String(a[colClothingItem]).localeCompare(String(b[colClothingItem]))
+      }
+      if (String(a[colCategory]) !== String(b[colCategory])) {
+        return String(a[colCategory]).localeCompare(String(b[colCategory]))
+      }
+      return String(a[colCalculatedSize]).localeCompare(String(b[colCalculatedSize]))
+    })
+    
+    const ws = XLSX.utils.json_to_sheet(orderedData)
+    
+    // Add worksheet to workbook - use translated sheet name
+    const sheetName = t('excel.sheetName') || 'Clothing Orders'
+    XLSX.utils.book_append_sheet(wb, ws, sheetName)
     
     // Generate Excel file
     const excelBuffer = XLSX.write(wb, { bookType: 'xlsx', type: 'base64' })
     
     // Generate filename with current date
     const date = new Date().toISOString().split('T')[0] // YYYY-MM-DD format
-    const fileName = `employee_measurements_${date}.xlsx`
+    const filePrefix = t('excel.fileName') || 'clothing_orders'
+    const fileName = `${filePrefix}_${date}.xlsx`
+    
+    // Debug log to verify the correct filename is being generated
+    console.log(`Generated filename: ${fileName} with prefix: ${filePrefix}`);
     
     return {
       success: true,

@@ -104,19 +104,31 @@ export default function SettingsPage() {
     setSuccessMessage(null);
     
     try {
-      // In a real implementation, you would call an API endpoint to update the user profile
-      // TODO: Implement server action to update user profile in database
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      // Create form data to send to server action
+      const formData = new FormData();
+      formData.append("name", userData.name || "");
+      formData.append("gender", userData.gender || "Male");
       
-      // For now, we just show success message
-      // Note: User's session is managed by NextAuth, so we don't need to update localStorage
+      // Import and call the server action
+      const { updateUserProfile } = await import("@/app/actions/auth");
+      const result = await updateUserProfile(null, formData);
       
-      setSuccessMessage(t("settings.success.profileUpdated"));
-      
-      // Force refresh of the session in case we implement the update functionality
-      // This would refresh the NextAuth session with new user data
-      window.location.reload();
-      
+      if (result.success) {
+        setSuccessMessage(t(result.message as string));
+        
+        // In NextAuth v5 we don't need to manually update the session
+        // The session will be refreshed on reload since we're using the JWT strategy
+        // with the "update" trigger in the callbacks
+        
+        // Force refresh of the page to get the updated session
+        window.location.reload();
+      } else {
+        // Handle error from server action
+        const errorMessage = result.errorLocale 
+          ? t(result.error as string)
+          : result.error;
+        setError(errorMessage || t("settings.error.saveFailed"));
+      }
     } catch (error) {
       console.error("Failed to save profile:", error);
       setError(t("settings.error.saveFailed"));

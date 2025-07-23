@@ -10,14 +10,18 @@ import { useLanguage } from "@/contexts/language-context"
 export function ExportMeasurementsButton({ className }: { className?: string }) {
   const [isExporting, setIsExporting] = useState(false)
   const { toast } = useToast()
-  const { t } = useLanguage()
+  const { t, language } = useLanguage()
 
   // Handle export button click
   const handleExport = async () => {
     setIsExporting(true)
     
     try {
-      const result = await exportEmployeeMeasurements()
+      // Ensure we have a valid language value
+      console.log(`Exporting with language: ${language}`);
+      
+      // Pass the current language to the export function
+      const result = await exportEmployeeMeasurements(language)
       
       if (result.success && result.fileContent && result.fileName) {
         // Create blob from base64 data

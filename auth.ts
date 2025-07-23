@@ -217,6 +217,7 @@ export const authConfig: NextAuthConfig = {
       // Refresh token data if user has incomplete data or on update trigger
       const needsOnboarding = !token.companyId || !token.gender
       
+      // Always refresh when update is triggered (happens on profile updates)
       if (needsOnboarding || trigger === "update") {
         try {
           const { default: prisma } = await import("@/lib/prisma")
