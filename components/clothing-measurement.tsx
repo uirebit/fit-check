@@ -19,15 +19,17 @@ interface ClothingMeasurementProps {
   clothingType: string
   clothingName: string
   userGender: "male" | "female"
+  sizeId?: string  // ID de una talla existente para editar
 }
 
-export function ClothingMeasurement({ clothingType, clothingName, userGender }: ClothingMeasurementProps) {
+export function ClothingMeasurement({ clothingType, clothingName, userGender, sizeId }: ClothingMeasurementProps) {
   const [measurements, setMeasurements] = useState<Record<string, string>>({})
   const [calculatedSize, setCalculatedSize] = useState<string>("")
   const [state, action, isPending] = useActionState(saveMeasurement, null)
   const [loading, setLoading] = useState(true)
   const [measureFields, setMeasureFields] = useState<any[]>([])
   const [loadingSavedData, setLoadingSavedData] = useState(false)
+  const [isEditMode, setIsEditMode] = useState(!!sizeId)
   const [hasSavedData, setHasSavedData] = useState(false)
   const { t } = useLanguage()
   const { user, isAuthenticated } = useAuth()
@@ -51,39 +53,43 @@ export function ClothingMeasurement({ clothingType, clothingName, userGender }: 
 
     console.log(`Loading data for clothing type: ${clothingType}`);
     
-    // DEBUG: Direct test of size calculation with the ID
-    const debugTest = async () => {
-      try {
-        console.log("DEBUG: Testing size calculation directly with ID:", clothingType);
-        
-        // Test with sample measurements
-        const testMeasurements = {
-          "chest": "100",
-          "waist": "90", 
-          "hips": "105"
-        };
-        
-        // First check if templates exist in the database
-        const { debugGetTemplates } = await import("@/app/actions/debug");
-        const templatesDebugResult = await debugGetTemplates(clothingType);
-        console.log("DEBUG: Templates check result:", templatesDebugResult);
-        
-        // Then test the size calculation
-        const size = await calculateSizeFromServer(clothingType, testMeasurements);
-        console.log("DEBUG: Direct test result:", size);
-      } catch (err) {
-        console.error("DEBUG: Direct test error:", err);
+    // Check if we're in edit mode (sizeId provided)
+    const loadSavedSize = async () => {
+      if (sizeId) {
+        try {
+          console.log("Loading saved size data for editing, sizeId:", sizeId);
+          setLoadingSavedData(true);
+          
+          // Import the getSavedSizeById function dynamically
+          const { getSavedSizeById } = await import("@/app/actions/sizes");
+          
+          // Get the saved size data
+          const savedSize = await getSavedSizeById(sizeId);
+          
+          if (savedSize) {
+            console.log("Found saved size data:", savedSize);
+            // Set the measurements and calculated size
+            setMeasurements(savedSize.measurements);
+            setCalculatedSize(savedSize.calculatedSize);
+            setHasSavedData(true);
+            setIsEditMode(true);
+          }
+        } catch (error) {
+          console.error("Error loading saved size data:", error);
+        } finally {
+          setLoadingSavedData(false);
+        }
       }
     };
-    
-    debugTest();
     
     // Mark that we're running the effect for this clothing type
     setEffectRan(clothingType);
     
-    // Reset state
-    setMeasurements({});
-    setCalculatedSize("");
+    // Reset state if not in edit mode
+    if (!sizeId) {
+      setMeasurements({});
+      setCalculatedSize("");
+    }
     setLoading(true);
     setHasSavedData(false);
     
@@ -95,6 +101,11 @@ export function ClothingMeasurement({ clothingType, clothingName, userGender }: 
         
         // Step 2: Get the clothing measure mappings
         const mappings = await getClothingMeasureMappings(clothingType);
+        
+        // If we're in edit mode, load the saved size data
+        if (sizeId) {
+          await loadSavedSize();
+        }
         
         // Step 3: Set up the measurement fields
         if (mappings && mappings.length > 0) {

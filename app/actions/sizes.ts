@@ -257,6 +257,102 @@ export async function saveMeasurement(prevState: SizeState | null, formData: For
   }
 }
 
+export async function getSavedSizeById(sizeId: string): Promise<SavedSize | null> {
+  try {
+    // Obtener el email exclusivamente de la sesión de NextAuth
+    let userEmail = "";
+    
+    try {
+      // Import auth from the root auth.ts file
+      const authFile = await import("@/auth");
+      const session = await authFile.auth();
+      
+      if (session?.user?.email) {
+        userEmail = session.user.email;
+        console.log("Found user email in NextAuth session:", userEmail);
+      } else {
+        console.warn("No user email found in NextAuth session");
+        return null;
+      }
+    } catch (authError) {
+      console.error("Error accessing NextAuth session:", authError);
+      return null;
+    }
+    
+    // Get measurement from DB
+    const { default: prisma } = await import("@/lib/prisma");
+    
+    // Get the user ID from email
+    const user = await prisma.fc_user.findUnique({
+      where: { email: userEmail },
+      select: { id: true }
+    });
+    
+    if (!user) {
+      console.error("Error: User not found in database");
+      return null;
+    }
+    
+    // Find the specific measurement for this user and sizeId
+    const measurement = await prisma.fc_cloth_measurements.findFirst({
+      where: {
+        id: parseInt(sizeId),
+        user_id: user.id
+      },
+      include: {
+        fc_cloth: {
+          include: {
+            fc_cloth_category: true
+          }
+        },
+        fc_cloth_measurement_value: true
+      }
+    });
+    
+    if (!measurement) {
+      console.error("Error: Size measurement not found");
+      return null;
+    }
+    
+    // Get the measure mappings for this cloth
+    const mappings = await prisma.fc_cloth_measure_mapping.findMany({
+      where: {
+        cloth_id: measurement.cloth_id
+      }
+    });
+    
+    // Create a lookup map
+    const measureMap = new Map();
+    mappings.forEach(mapping => {
+      if (mapping.measure_number !== null && mapping.measure_key !== null) {
+        measureMap.set(mapping.measure_number, mapping.measure_key);
+      }
+    });
+    
+    // Transform the measurement data
+    const measurementValues = measurement.fc_cloth_measurement_value.reduce((acc, item) => {
+      // Get the key for this measurement
+      const key = measureMap.get(item.measure_number) || `measure_${item.measure_number}`;
+      return {
+        ...acc,
+        [key]: item.measure_value?.toString() || ""
+      };
+    }, {} as Record<string, string>);
+    
+    return {
+      id: measurement.id.toString(),
+      clothingType: measurement.fc_cloth.fc_cloth_category?.description || "unknown",
+      clothingName: measurement.fc_cloth.description,
+      measurements: measurementValues,
+      calculatedSize: measurement.calculated_size || "",
+      savedAt: measurement.created_at ? measurement.created_at.toISOString() : new Date().toISOString()
+    };
+  } catch (error) {
+    console.error("Error in getSavedSizeById:", error);
+    return null;
+  }
+}
+
 export async function getSavedSizes(): Promise<SavedSize[]> {
   try {
     // Obtener el email exclusivamente de la sesión de NextAuth

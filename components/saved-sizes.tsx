@@ -67,6 +67,19 @@ export function SavedSizes() {
       }
     }
   }
+  
+  const handleEdit = (size: SavedSize) => {
+    // Redirigir a la página principal de tallas con el ID de la talla para editar
+    const clothTypeParam = size.clothingType ? `clothType=${encodeURIComponent(size.clothingType)}` : '';
+    const clothNameParam = size.clothingName ? `&clothName=${encodeURIComponent(size.clothingName)}` : '';
+    const sizeIdParam = `&sizeId=${encodeURIComponent(size.id)}`;
+    
+    // Obtener el idioma actual de la URL o usar el predeterminado
+    const locale = window.location.pathname.split('/')[1] || 'en';
+    
+    // Redirigir a la página principal con los parámetros
+    window.location.href = `/${locale}/sizes?${clothTypeParam}${clothNameParam}${sizeIdParam}`;
+  }
 
   if (loading) {
     return (
@@ -147,7 +160,12 @@ export function SavedSizes() {
                 </div>
 
                 <div className="flex space-x-2 pt-4">
-                  <Button variant="outline" size="sm" className="flex-1">
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    className="flex-1"
+                    onClick={() => handleEdit(size)}
+                  >
                     <Edit className="h-4 w-4 mr-1" />
                     {t("saved.edit")}
                   </Button>

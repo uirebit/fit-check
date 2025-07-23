@@ -36,6 +36,53 @@ export default function SizesPage() {
     gender: (user?.gender === "Male" ? "male" : "female") as "male" | "female",
   }
   
+  // State to store the sizeId from URL params if available
+  const [editSizeId, setEditSizeId] = useState<string | null>(null);
+  
+  // Check URL parameters for edit mode
+  useEffect(() => {
+    // Get URL search params
+    const params = new URLSearchParams(window.location.search);
+    const clothType = params.get('clothType');
+    const clothName = params.get('clothName');
+    const sizeId = params.get('sizeId');
+    
+    // Store the sizeId if available
+    if (sizeId) {
+      setEditSizeId(sizeId);
+    }
+    
+    // If we have a sizeId, we're in edit mode
+    if (sizeId && isAuthenticated) {
+      // Import the getSavedSizeById function dynamically
+      import('@/app/actions/sizes').then(({ getSavedSizeById }) => {
+        getSavedSizeById(sizeId).then(savedSize => {
+          if (savedSize) {
+            // If we find the size, set the clothing type
+            const matchingClothType = clothingTypes.find(
+              ct => ct.description === savedSize.clothingName
+            );
+            
+            if (matchingClothType) {
+              setSelectedClothing(matchingClothType.id.toString());
+              // The sizeId will be passed to the ClothingMeasurement component
+            }
+          }
+        });
+      });
+    }
+    // If we have clothType and clothName from params but no sizeId, just select that clothing
+    else if (clothType && clothName) {
+      const matchingClothType = clothingTypes.find(
+        ct => ct.description === clothName || ct.id.toString() === clothType
+      );
+      
+      if (matchingClothType) {
+        setSelectedClothing(matchingClothType.id.toString());
+      }
+    }
+  }, [clothingTypes, isAuthenticated]);
+  
   // Load clothing items from the database
   useEffect(() => {
     async function loadClothingItems() {
@@ -301,10 +348,11 @@ export default function SizesPage() {
             {/* Measurement Component */}
             {selectedClothing && (
               <ClothingMeasurement
-                key={selectedClothing} // This forces component remount when clothing type changes
+                key={`${selectedClothing}-${editSizeId || 'new'}`} // This forces component remount when clothing type or sizeId changes
                 clothingType={selectedClothing}
                 clothingName={clothingTypes.find((t) => t.id === selectedClothing)?.translationKey || ""}
                 userGender={userData.gender}
+                sizeId={editSizeId || undefined}
               />
             )}
           </>
