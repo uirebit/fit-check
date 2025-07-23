@@ -10,6 +10,8 @@ datasource db {
 model fc_company {
   id               Int                @id @default(autoincrement())
   description      String             @db.VarChar(200)
+  creation_date    DateTime?          @default(now()) @db.Timestamp(6)
+  user_id          Int
   fc_company_cloth fc_company_cloth[]
   fc_user          fc_user[]
 }
@@ -36,6 +38,7 @@ model fc_user_type {
 
 model fc_cloth {
   id                       Int                        @id @default(autoincrement())
+  code                     String                     @db.VarChar(20)
   category_id              Int?
   description              String                     @unique @db.VarChar(100)
   fc_cloth_category        fc_cloth_category?         @relation(fields: [category_id], references: [id], onDelete: NoAction, onUpdate: NoAction)

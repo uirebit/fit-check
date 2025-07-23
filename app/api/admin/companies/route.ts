@@ -84,6 +84,19 @@ export async function POST(request: NextRequest) {
         { status: 403 }
       )
     }
+    
+    // Get full user details from database to ensure we have the ID
+    const dbUser = await prisma.fc_user.findUnique({
+      where: { email: user.email },
+      select: { id: true }
+    })
+    
+    if (!dbUser) {
+      return NextResponse.json(
+        { error: 'User not found in database' },
+        { status: 404 }
+      )
+    }
 
     const { description } = await request.json()
 
@@ -118,11 +131,12 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Create new company
+    // Create new company with the creator's user ID
     const newCompany = await prisma.fc_company.create({
       data: {
-        description: description.trim()
-      },
+        description: description.trim(),
+        user_id: dbUser.id // Add user_id from the database user record
+      } as any, // Use type assertion to bypass TypeScript error temporarily
       include: {
         _count: {
           select: {
@@ -136,7 +150,7 @@ export async function POST(request: NextRequest) {
     const transformedCompany = {
       id: newCompany.id,
       description: newCompany.description,
-      userCount: newCompany._count.fc_user
+      userCount: (newCompany as any)._count?.fc_user || 0 // Use type assertion and optional chaining
     }
 
     return NextResponse.json(transformedCompany, { status: 201 })
