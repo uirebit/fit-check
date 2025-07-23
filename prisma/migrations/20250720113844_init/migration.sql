@@ -66,31 +66,31 @@ CREATE TABLE "fc_cloth" (
     CONSTRAINT "fc_cloth_pkey" PRIMARY KEY ("id")
 );
 
-INSERT INTO fc_cloth (description, category_id) VALUES
-('work_pants', 1),
-('work_shirt', 1),
-('work_jacket', 1),
-('safety_jacket', 7),
-('protective_gloves', 4),
-('work_shoes', 2),
-('safety_boots', 2),
-('helmet', 3),
-('ear_protection', 3),
-('eye_protection', 5),
-('face_shield', 5),
-('respirator_mask', 6),
-('high_visibility_vest', 7),
-('thermal_underwear', 8),
-('raincoat', 1),
-('apron', 1),
-('tool_belt', 1),
-('coveralls', 1),
-('lab_coat', 10),
-('knee_pads', 1),
-('welding_jacket', 9),
-('welding_gloves', 9),
-('fire_resistant_suit', 9),
-('cut_resistant_gloves', 4);
+INSERT INTO fc_cloth (code, description, category_id) VALUES
+(1, 'work_pants', 1),
+(2, 'work_shirt', 1),
+(3, 'work_jacket', 1),
+(4, 'safety_jacket', 7),
+(5, 'protective_gloves', 4),
+(6, 'work_shoes', 2),
+(7, 'safety_boots', 2),
+(8, 'helmet', 3),
+(9, 'ear_protection', 3),
+(10, 'eye_protection', 5),
+(11, 'face_shield', 5),
+(12, 'respirator_mask', 6),
+(13, 'high_visibility_vest', 7),
+(14, 'thermal_underwear', 8),
+(15, 'raincoat', 1),
+(16, 'apron', 1),
+(17, 'tool_belt', 1),
+(18, 'coveralls', 1),
+(19, 'lab_coat', 10),
+(20, 'knee_pads', 1),
+(21, 'welding_jacket', 9),
+(22, 'welding_gloves', 9),
+(23, 'fire_resistant_suit', 9),
+(24, 'cut_resistant_gloves', 4);
 
 -- CreateTable
 CREATE TABLE "fc_cloth_measure_mapping" (
